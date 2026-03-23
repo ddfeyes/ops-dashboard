@@ -29,15 +29,17 @@ modules:
   status: REVIEW
   issues: [25, 26, 27, 28, 29, 30, 33, 34, 35, 36]
   notes: |
-    Mika CONDITIONALLY APPROVED. 3 fixes applied in commit 49594e7.
-    Issues: #34 metric % in label row, #35 docker SDK containers, #36 Done badge scroll.
-    Pushed to main, sent to Masami for review.
+    Masami PR#31 APPROVE_WITH_FIXES — both fixes already applied in main:
+    MAJOR: metric-value moved outside metric-bar-wrap (commit c962d94 + 6f7f51d) — value is visible.
+    NIT: renderServerMetrics no longer renders Docker in mac panel (commit 6f7f51d) — separate containers panel.
+    Self-tested locally: metrics show 0.8%/65.0%/4.7% values clearly visible. Docker panel shows proper empty state.
+    Re-sent to Masami for review of current main (7d8374f).
   priority: P0
 pipeline_state: REVIEW
-pipeline_notes: '49594e7 pushed to main. Sent to Masami for review (Mika feedback fixes).'
+pipeline_notes: 'Masami fixes applied. Re-review sent on main@7d8374f.'
 pr:
   number: null
   branch: main
-  commit: 49594e7
-  description: 'fix: Mika feedback — metric % in label row, docker SDK for containers, Done badge scroll'
+  commit: 7d8374f
+  description: 'fix: metric-value visibility (major) + no docker in mac panel (nit) — Masami PR#31 fixes'
 blockers: []
