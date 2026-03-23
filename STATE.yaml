@@ -1,5 +1,5 @@
-current_module: M3
-last_updated: '2026-03-23T05:00:52Z'
+current_module: M5
+last_updated: '2026-03-23T06:00:00Z'
 modules:
 - id: M1
   name: Backend API
@@ -26,12 +26,15 @@ modules:
   status: DONE
 - id: M3
   name: Frontend — Agent Monitor
-  status: pending
+  notes: 'PR #17 merged. AO sessions + OpenClaw agent panels implemented.'
+  status: DONE
 - id: M4
   name: Frontend — System Metrics
-  status: pending
+  notes: 'PR #19 merged. Mac + Hetzner progress bars with color thresholds.'
+  status: DONE
 - id: M5
   name: Integration & Deploy
-  status: pending
+  notes: 'Nav tabs, panel reorder, refresh-all, smoke tests, Dockerfile static fix.'
+  status: DONE
 project: ops-dashboard
-status: WORKING
+status: DONE

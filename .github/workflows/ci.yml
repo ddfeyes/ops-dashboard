@@ -14,4 +14,4 @@ jobs:
           python-version: "3.11"
       - run: pip install fastapi uvicorn psutil paramiko httpx pytest
       - run: python -c "from app.main import app; print('import OK')"
-      - run: pytest tests/ -v 2>/dev/null || echo "no tests yet"
+      - run: pytest tests/ -v
