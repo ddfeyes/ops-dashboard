@@ -34,6 +34,14 @@ _STATIC_AO_SESSIONS_JSON = os.getenv("AO_SESSIONS_JSON", "")
 # e.g. http://host.docker.internal:18789 or http://172.17.0.1:18789
 _OPENCLAW_GATEWAY_URL = os.getenv("OPENCLAW_GATEWAY_URL", "http://host.docker.internal:18789")
 
+# Optional: inject pre-computed agent status JSON
+# Format: {"lain": {"status": "active", "last_seen": "<ISO>"}, ...}
+_AGENTS_STATUS_JSON = os.getenv("OPENCLAW_AGENTS_STATUS_JSON", "")
+
+# Optional: path to OpenClaw sessions directory (mount from host)
+# e.g. /openclaw-sessions → maps to ~/.openclaw/agents on host
+_OPENCLAW_SESSIONS_DIR = os.getenv("OPENCLAW_SESSIONS_DIR", "")
+
 # Active threshold: sessions active within this many seconds are "active"
 _ACTIVE_THRESHOLD_SECS = 300  # 5 minutes
 
@@ -46,35 +54,82 @@ def _find_openclaw_config() -> Path | None:
 
 
 def _fetch_gateway_sessions() -> dict[str, dict]:
-    """Fetch live session data from OpenClaw gateway. Returns dict keyed by agent id."""
+    """Fetch live session data. Returns dict keyed by short agent id.
+    
+    Tries (in order):
+    1. OPENCLAW_AGENTS_STATUS_JSON env var (pre-computed)
+    2. OPENCLAW_SESSIONS_DIR — read sessions.json files from mounted dir
+    3. OpenClaw gateway HTTP API
+    """
+    # 1. Pre-computed status injection
+    if _AGENTS_STATUS_JSON:
+        try:
+            raw = json.loads(_AGENTS_STATUS_JSON)
+            if isinstance(raw, dict):
+                return raw
+        except json.JSONDecodeError:
+            pass
+
+    # 2. Read sessions.json files from mounted directory
+    if _OPENCLAW_SESSIONS_DIR:
+        by_agent: dict[str, dict] = {}
+        sessions_base = Path(_OPENCLAW_SESSIONS_DIR)
+        now_ms = int(time.time() * 1000)
+        if sessions_base.exists():
+            for agent_dir in sessions_base.iterdir():
+                if not agent_dir.is_dir():
+                    continue
+                agent_id = agent_dir.name
+                sessions_file = agent_dir / "sessions" / "sessions.json"
+                if not sessions_file.exists():
+                    continue
+                try:
+                    with sessions_file.open() as f:
+                        sess_data: dict = json.load(f)
+                    # sessions_data is dict: session_key -> session_object
+                    # Find most recently updated session
+                    best_ms = 0
+                    for _sk, sv in sess_data.items():
+                        if isinstance(sv, dict):
+                            updated_ms = sv.get("updatedAt") or 0
+                            if updated_ms > best_ms:
+                                best_ms = updated_ms
+                    if best_ms > 0:
+                        status = "active" if (now_ms - best_ms) < _ACTIVE_THRESHOLD_SECS * 1000 else "idle"
+                        by_agent[agent_id] = {
+                            "status": status,
+                            "last_seen_iso": _ms_to_iso(best_ms),
+                            "_last_ms": best_ms,
+                        }
+                except Exception:
+                    continue
+        if by_agent:
+            return by_agent
+
+    # 3. Gateway HTTP API
     if not _OPENCLAW_GATEWAY_URL or _urllib_request is None:
         return {}
     try:
-        url = f"{_OPENCLAW_GATEWAY_URL.rstrip('/')}/sessions"
+        url = f"{_OPENCLAW_GATEWAY_URL.rstrip('/')}/api/sessions"
         req = _urllib_request.Request(url, headers={"Accept": "application/json"})
         with _urllib_request.urlopen(req, timeout=3) as resp:
             raw = resp.read().decode("utf-8")
             data = json.loads(raw)
-            # data is expected to be a list of session objects or dict
             sessions_list = data if isinstance(data, list) else data.get("sessions", [])
-            # Build lookup: agentId -> latest session info
-            by_agent: dict[str, dict] = {}
+            by_agent = {}
             now_ms = int(time.time() * 1000)
             for s in sessions_list:
                 agent_id = s.get("agentId") or s.get("agent_id") or s.get("id", "")
-                # Strip channel prefix if present (e.g. "agent:lain:...")
                 parts = agent_id.split(":")
                 short_id = parts[1] if len(parts) >= 2 and parts[0] == "agent" else agent_id
                 last_active_ms = s.get("lastActiveAt") or s.get("last_active_at") or s.get("updatedAt") or 0
                 if not last_active_ms:
                     last_active_ms = s.get("createdAt") or 0
                 status = "active" if (now_ms - last_active_ms) < _ACTIVE_THRESHOLD_SECS * 1000 else "idle"
-                # Keep the most recent session per agent
                 existing = by_agent.get(short_id)
                 if existing is None or last_active_ms > (existing.get("_last_ms") or 0):
                     by_agent[short_id] = {
                         "status": status,
-                        "last_seen": last_active_ms,
                         "last_seen_iso": _ms_to_iso(last_active_ms),
                         "_last_ms": last_active_ms,
                     }
