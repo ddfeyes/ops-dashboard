@@ -675,8 +675,8 @@
 
       <section class="panel" id="system-mac">
         <div class="panel-header">
-          <span>System Metrics</span>
-          <span class="panel-count mono" id="mac-label">local</span>
+          <span>Hetzner Server</span>
+          <span class="panel-count mono" id="mac-label">live</span>
         </div>
         <div class="panel-body" id="mac-root">
           <div class="empty-panel">Loading…</div>
@@ -685,7 +685,7 @@
 
       <section class="panel" id="system-hetzner">
         <div class="panel-header">
-          <span>Hetzner</span>
+          <span>Containers</span>
           <span class="panel-count mono" id="hetzner-label">—</span>
         </div>
         <div class="panel-body" id="hetzner-root">
@@ -921,19 +921,28 @@
     }
 
     function renderAgents(data) {
-      const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+      const rawSessions = Array.isArray(data.sessions) ? data.sessions : [];
       const agentList = Array.isArray(data.agents) ? data.agents : [];
 
-      document.getElementById("sessions-count").textContent = sessions.length;
+      // Check for sentinel error from backend (ao not installed etc.)
+      const aoError = rawSessions.find(s => s._error);
+      const sessions = rawSessions.filter(s => !s._error);
+
+      document.getElementById("sessions-count").textContent = aoError ? "n/a" : sessions.length;
       document.getElementById("agents-count").textContent = agentList.length;
 
-      document.getElementById("sessions-root").innerHTML = sessions.length
-        ? sessions.map(sessionHtml).join("")
-        : `<div class="empty-state"><div class="empty-state-icon">IDLE</div><div>No active sessions</div><div class="empty-state-detail">Waiting for AO session activity</div></div>`;
+      if (aoError) {
+        document.getElementById("sessions-root").innerHTML =
+          `<div class="empty-state"><div class="empty-state-icon">⚠</div><div>AO not available</div><div class="empty-state-detail">${escHtml(aoError._message || aoError._error)}</div></div>`;
+      } else {
+        document.getElementById("sessions-root").innerHTML = sessions.length
+          ? sessions.map(sessionHtml).join("")
+          : `<div class="empty-state"><div class="empty-state-icon">IDLE</div><div>No active sessions</div><div class="empty-state-detail">Waiting for AO session activity</div></div>`;
+      }
 
       document.getElementById("agents-root").innerHTML = agentList.length
         ? agentList.map(agentCardHtml).join("")
-        : `<div class="empty-state"><div class="empty-state-icon">BOT</div><div>No agents configured</div><div class="empty-state-detail">Add OpenClaw agents to populate this panel</div></div>`;
+        : `<div class="empty-state"><div class="empty-state-icon">BOT</div><div>No agents configured</div><div class="empty-state-detail">Set OPENCLAW_AGENTS_JSON env var to populate this panel</div></div>`;
     }
 
     let agentsRefreshTimer = null;
@@ -977,37 +986,24 @@
         </div>`;
     }
 
-    function renderMac(mac) {
-      if (!mac) {
-        document.getElementById("mac-root").innerHTML = `<div class="empty-panel" style="color:#f85149">No data</div>`;
+    function renderServerMetrics(server, rootId, labelId) {
+      if (!server) {
+        document.getElementById(rootId).innerHTML = `<div class="empty-panel" style="color:#f85149">No data</div>`;
+        if (labelId) document.getElementById(labelId).textContent = "offline";
         return;
       }
-      const mem = mac.memory || {};
-      const disk = mac.disk || {};
+      const mem = server.memory || {};
+      const disk = server.disk || {};
       const memDetail = (mem.used_gb != null && mem.total_gb != null)
         ? `${mem.used_gb} GB / ${mem.total_gb} GB` : "";
       const diskDetail = (disk.used_gb != null && disk.total_gb != null)
         ? `${disk.used_gb} GB / ${disk.total_gb} GB` : "";
 
-      document.getElementById("mac-root").innerHTML =
-        metricBarHtml("CPU", mac.cpu_percent || 0, "") +
-        metricBarHtml("Memory", mem.percent || 0, memDetail) +
-        metricBarHtml("Disk", disk.percent || 0, diskDetail);
-    }
-
-    function renderHetzner(hetzner, error) {
-      if (error || !hetzner) {
-        document.getElementById("hetzner-root").innerHTML =
-          `<div class="status-error"><div class="status-error-icon">!</div><div><div>Hetzner connection failed</div><div class="status-error-detail">SSH error: ${escHtml(error || "no data")}</div></div></div>`;
-        document.getElementById("hetzner-label").textContent = "offline";
-        return;
+      // Docker containers (if present)
+      const containers = Array.isArray(server.containers) ? server.containers : [];
+      if (labelId) {
+        document.getElementById(labelId).textContent = server.label || (containers.length ? `${containers.length} containers` : "live");
       }
-
-      const disk = hetzner.disk || {};
-      const diskPct = disk.use_percent ? parseFloat(disk.use_percent) : 0;
-      const diskDetail = (disk.used && disk.size) ? `${disk.used} / ${disk.size}` : "";
-      const containers = Array.isArray(hetzner.containers) ? hetzner.containers : [];
-      document.getElementById("hetzner-label").textContent = `${hetzner.container_count || 0} containers`;
 
       let containersHtml = "";
       if (containers.length) {
@@ -1027,11 +1023,23 @@
           ${rows}`;
       }
 
-      document.getElementById("hetzner-root").innerHTML =
-        metricBarHtml("CPU", hetzner.cpu_percent || 0, "") +
-        metricBarHtml("Memory", hetzner.memory_percent || 0, "") +
-        metricBarHtml("Disk", diskPct, diskDetail) +
+      document.getElementById(rootId).innerHTML =
+        metricBarHtml("CPU", server.cpu_percent || 0, "") +
+        metricBarHtml("Memory", mem.percent || 0, memDetail) +
+        metricBarHtml("Disk", disk.percent || 0, diskDetail) +
         containersHtml;
+    }
+
+    // Legacy alias used for backward compat
+    function renderMac(server) { renderServerMetrics(server, "mac-root", "mac-label"); }
+    function renderHetzner(server, error) {
+      if (error || !server) {
+        document.getElementById("hetzner-root").innerHTML =
+          `<div class="status-error"><div class="status-error-icon">!</div><div><div>Server metrics error</div><div class="status-error-detail">${escHtml(error || "no data")}</div></div></div>`;
+        document.getElementById("hetzner-label").textContent = "offline";
+        return;
+      }
+      renderServerMetrics(server, "hetzner-root", "hetzner-label");
     }
 
     async function loadSystem() {
@@ -1039,13 +1047,16 @@
         const res = await fetch("/api/system");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        renderMac(data.mac);
-        renderHetzner(data.hetzner, data.hetzner_error);
+        // server = local psutil (Hetzner), render in both panels
+        const server = data.server || data.hetzner;
+        const serverErr = data.server_error || data.hetzner_error;
+        renderServerMetrics(server, "mac-root", "mac-label");
+        renderHetzner(server, serverErr);
       } catch (err) {
         document.getElementById("mac-root").innerHTML =
           `<div class="empty-panel" style="color:#f85149">Error: ${escHtml(err.message)}</div>`;
         document.getElementById("hetzner-root").innerHTML =
-          `<div class="status-error"><div class="status-error-icon">!</div><div><div>Hetzner metrics unavailable</div><div class="status-error-detail">${escHtml(err.message)}</div></div></div>`;
+          `<div class="status-error"><div class="status-error-icon">!</div><div><div>Metrics unavailable</div><div class="status-error-detail">${escHtml(err.message)}</div></div></div>`;
       }
     }
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -11,7 +12,15 @@ from typing import Any
 _OPENCLAW_CONFIG_PATHS = [
     Path.home() / ".openclaw-lain-core" / "openclaw.json",
     Path.home() / ".openclaw" / "openclaw.json",
+    Path("/root/.openclaw-lain-core/openclaw.json"),
+    Path("/root/.openclaw/openclaw.json"),
 ]
+
+# Optional: inject static agent list via env var (JSON array of {id, name, emoji, model, workspace})
+_STATIC_AGENTS_JSON = os.getenv("OPENCLAW_AGENTS_JSON", "")
+
+# Optional: inject AO sessions via env var (JSON array)
+_STATIC_AO_SESSIONS_JSON = os.getenv("AO_SESSIONS_JSON", "")
 
 
 def _find_openclaw_config() -> Path | None:
@@ -22,7 +31,20 @@ def _find_openclaw_config() -> Path | None:
 
 
 def get_ao_sessions() -> list[dict[str, Any]]:
-    """Run `ao status --json` and return the parsed session list."""
+    """Run `ao status --json` and return the parsed session list.
+    
+    Falls back to AO_SESSIONS_JSON env var if `ao` is not installed.
+    """
+    # Try env var override first (useful when ao isn't on the container)
+    if _STATIC_AO_SESSIONS_JSON:
+        try:
+            raw = json.loads(_STATIC_AO_SESSIONS_JSON)
+            if isinstance(raw, list):
+                return raw
+        except json.JSONDecodeError:
+            pass
+
+    # Try running ao CLI
     try:
         result = subprocess.run(
             ["ao", "status", "--json"],
@@ -32,12 +54,15 @@ def get_ao_sessions() -> list[dict[str, Any]]:
         )
         if result.returncode != 0:
             return []
-        raw: list[dict] = json.loads(result.stdout)
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError):
+        raw_list: list[dict] = json.loads(result.stdout)
+    except FileNotFoundError:
+        # ao not installed — return sentinel so frontend can show helpful message
+        return [{"_error": "ao_not_installed", "_message": "ao CLI not available in this environment"}]
+    except (subprocess.TimeoutExpired, json.JSONDecodeError):
         return []
 
     sessions = []
-    for item in raw:
+    for item in raw_list:
         sessions.append(
             {
                 "name": item.get("name"),
@@ -57,7 +82,20 @@ def get_ao_sessions() -> list[dict[str, Any]]:
 
 
 def get_openclaw_agents() -> list[dict[str, Any]]:
-    """Read OpenClaw agent configs and return the agent list."""
+    """Read OpenClaw agent configs and return the agent list.
+    
+    Falls back to OPENCLAW_AGENTS_JSON env var if config file not found.
+    """
+    # Try env var override first
+    if _STATIC_AGENTS_JSON:
+        try:
+            raw = json.loads(_STATIC_AGENTS_JSON)
+            if isinstance(raw, list):
+                return raw
+        except json.JSONDecodeError:
+            pass
+
+    # Try reading config file
     config_path = _find_openclaw_config()
     if config_path is None:
         return []

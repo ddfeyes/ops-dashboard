@@ -1,25 +1,29 @@
-"""System metrics: Mac (psutil) + Hetzner (SSH via paramiko)."""
+"""System metrics: local server (psutil + docker) + optional Mac via SSH tunnel."""
 
 from __future__ import annotations
 
 import json
 import os
 import re
+import subprocess
 from typing import Any
 
-import paramiko
 import psutil
 
-HETZNER_HOST = os.getenv("HETZNER_HOST", "94.130.65.86")
-HETZNER_PORT = int(os.getenv("HETZNER_PORT", "2203"))
-HETZNER_USER = os.getenv("HETZNER_USER", "user3")
+# The dashboard runs ON the Hetzner server.
+# Local psutil = Hetzner server metrics.
+# "Mac" panel is shown as N/A unless a MAC_SSH_HOST is configured.
+
+MAC_SSH_HOST = os.getenv("MAC_SSH_HOST", "")  # e.g. "user@192.168.x.x"
+MAC_SSH_PORT = int(os.getenv("MAC_SSH_PORT", "22"))
 
 
 # ---------------------------------------------------------------------------
-# Mac metrics
+# Local server metrics (runs wherever the container is — Hetzner)
 # ---------------------------------------------------------------------------
 
-def get_mac_metrics() -> dict[str, Any]:
+def get_server_metrics() -> dict[str, Any]:
+    """Return metrics for the local machine (the Hetzner server)."""
     cpu = psutil.cpu_percent(interval=0.5)
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage("/")
@@ -33,7 +37,10 @@ def get_mac_metrics() -> dict[str, Any]:
                     label = entry.label or name
                     temps[label] = entry.current
     except (AttributeError, Exception):
-        pass  # Not available on all platforms
+        pass
+
+    # Docker containers (if docker socket is available)
+    containers = _get_docker_containers()
 
     return {
         "cpu_percent": cpu,
@@ -48,121 +55,91 @@ def get_mac_metrics() -> dict[str, Any]:
             "percent": disk.percent,
         },
         "temperatures": temps,
-    }
-
-
-# ---------------------------------------------------------------------------
-# Hetzner metrics via SSH
-# ---------------------------------------------------------------------------
-
-def _ssh_client() -> paramiko.SSHClient:
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(
-        hostname=HETZNER_HOST,
-        port=HETZNER_PORT,
-        username=HETZNER_USER,
-        timeout=10,
-    )
-    return client
-
-
-def _run(client: paramiko.SSHClient, cmd: str) -> str:
-    _, stdout, _ = client.exec_command(cmd, timeout=15)
-    return stdout.read().decode(errors="replace")
-
-
-def _parse_top(output: str) -> dict[str, float]:
-    """Parse cpu% and mem% from `top -bn1` output."""
-    cpu_idle = 0.0
-    mem_percent = 0.0
-
-    for line in output.splitlines():
-        # Example: %Cpu(s):  3.2 us,  1.0 sy,  0.0 ni, 94.5 id, ...
-        if re.search(r"%Cpu", line, re.IGNORECASE):
-            m = re.search(r"([\d.]+)\s*id", line)
-            if m:
-                cpu_idle = float(m.group(1))
-        # Example: MiB Mem :  64220.5 total,  12345.0 free,  ...  used, ...
-        elif re.search(r"MiB Mem", line, re.IGNORECASE):
-            total_m = re.search(r"([\d.]+)\s*total", line)
-            used_m = re.search(r"([\d.]+)\s*used", line)
-            if total_m and used_m:
-                total = float(total_m.group(1))
-                used = float(used_m.group(1))
-                if total > 0:
-                    mem_percent = round(used / total * 100, 1)
-
-    return {
-        "cpu_percent": round(100.0 - cpu_idle, 1),
-        "memory_percent": mem_percent,
-    }
-
-
-def _parse_df(output: str) -> list[dict[str, Any]]:
-    """Parse `df -h` output into a list of filesystem entries."""
-    lines = output.strip().splitlines()
-    results: list[dict[str, Any]] = []
-    for line in lines[1:]:  # skip header
-        parts = line.split()
-        if len(parts) < 6:
-            continue
-        results.append({
-            "filesystem": parts[0],
-            "size": parts[1],
-            "used": parts[2],
-            "avail": parts[3],
-            "use_percent": parts[4],
-            "mount": parts[5],
-        })
-    return results
-
-
-def _parse_docker_ps(output: str) -> list[dict[str, Any]]:
-    """Parse `docker ps --format json` output (one JSON object per line)."""
-    containers: list[dict[str, Any]] = []
-    for line in output.strip().splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            containers.append(json.loads(line))
-        except json.JSONDecodeError:
-            pass
-    return containers
-
-
-def get_hetzner_metrics() -> dict[str, Any]:
-    client = _ssh_client()
-    try:
-        top_out = _run(client, "top -bn1")
-        df_out = _run(client, "df -h")
-        docker_out = _run(client, "docker ps --format json")
-    finally:
-        client.close()
-
-    cpu_mem = _parse_top(top_out)
-    filesystems = _parse_df(df_out)
-    containers = _parse_docker_ps(docker_out)
-
-    # Summarise root filesystem usage
-    root_disk = next(
-        (fs for fs in filesystems if fs["mount"] == "/"),
-        filesystems[0] if filesystems else {},
-    )
-
-    return {
-        "cpu_percent": cpu_mem["cpu_percent"],
-        "memory_percent": cpu_mem["memory_percent"],
-        "disk": {
-            "filesystem": root_disk.get("filesystem"),
-            "size": root_disk.get("size"),
-            "used": root_disk.get("used"),
-            "avail": root_disk.get("avail"),
-            "use_percent": root_disk.get("use_percent"),
-            "mount": root_disk.get("mount"),
-        },
-        "filesystems": filesystems,
         "containers": containers,
         "container_count": len(containers),
+        "label": "Hetzner Server",
     }
+
+
+def _get_docker_containers() -> list[dict[str, Any]]:
+    """Return running docker containers via CLI (no socket needed if docker CLI is installed)."""
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "--format", "{{json .}}"],
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+        if result.returncode != 0:
+            return []
+        containers = []
+        for line in result.stdout.strip().splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                containers.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+        return containers
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Mac metrics — only if MAC_SSH_HOST is configured
+# ---------------------------------------------------------------------------
+
+def get_mac_metrics() -> dict[str, Any] | None:
+    """Return Mac metrics if MAC_SSH_HOST env var is set, else None."""
+    if not MAC_SSH_HOST:
+        return None
+    try:
+        import paramiko  # type: ignore
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(
+            hostname=MAC_SSH_HOST,
+            port=MAC_SSH_PORT,
+            timeout=8,
+        )
+        # Run a Python snippet on the Mac to get psutil metrics
+        cmd = (
+            "python3 -c \""
+            "import psutil, json; "
+            "m=psutil.virtual_memory(); d=psutil.disk_usage('/'); "
+            "print(json.dumps({'cpu':psutil.cpu_percent(interval=0.3), "
+            "'mem_pct':m.percent,'mem_total':round(m.total/1024**3,2),"
+            "'mem_used':round(m.used/1024**3,2),'disk_pct':d.percent,"
+            "'disk_total':round(d.total/1024**3,2),'disk_used':round(d.used/1024**3,2)}))\""
+        )
+        _, stdout, _ = client.exec_command(cmd, timeout=12)
+        raw = stdout.read().decode(errors="replace").strip()
+        client.close()
+        data = json.loads(raw)
+        return {
+            "cpu_percent": data.get("cpu", 0),
+            "memory": {
+                "total_gb": data.get("mem_total", 0),
+                "used_gb": data.get("mem_used", 0),
+                "percent": data.get("mem_pct", 0),
+            },
+            "disk": {
+                "total_gb": data.get("disk_total", 0),
+                "used_gb": data.get("disk_used", 0),
+                "percent": data.get("disk_pct", 0),
+            },
+            "label": "Mac",
+        }
+    except Exception as exc:
+        return {"error": str(exc), "label": "Mac"}
+
+
+# ---------------------------------------------------------------------------
+# Backward-compat shims used by main.py
+# ---------------------------------------------------------------------------
+
+def get_hetzner_metrics() -> dict[str, Any]:
+    """Alias: local server metrics (dashboard runs on Hetzner)."""
+    return get_server_metrics()
