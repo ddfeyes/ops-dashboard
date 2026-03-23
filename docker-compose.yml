@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  ops-dashboard:
+    build: .
+    image: ops-dashboard:latest
+    container_name: ops-dashboard
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      - KANBAN_REPOS=ddfeyes/ops-dashboard,ddfeyes/svc-dash
+      - SESSION_TOKEN_LIMIT=200000
+      - WEEKLY_ALL_TOKEN_LIMIT=10000000
+      - WEEKLY_SONNET_TOKEN_LIMIT=7500000
