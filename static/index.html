@@ -63,7 +63,6 @@
     }
     .header-left { display: flex; align-items: center; gap: 12px; }
     .logo { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
-    .logo span { color: var(--accent); }
     .header-right { display: flex; align-items: center; gap: 16px; }
     #refresh-btn {
       background: var(--surface);
@@ -142,6 +141,35 @@
       padding: 0;
       height: 100%;
       overflow-x: auto;
+      scroll-behavior: smooth;
+    }
+    .board-wrapper::-webkit-scrollbar { height: 4px; }
+    .board-wrapper::-webkit-scrollbar-track { background: transparent; }
+    .board-wrapper::-webkit-scrollbar-thumb { background: #58a6ff44; border-radius: 2px; }
+    .scroll-hint {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--accent);
+      opacity: 0.7;
+    }
+    .scroll-hint.visible { display: flex; }
+    .done-badge {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: #3fb950;
+    }
+    .done-badge.visible { display: flex; }
+    .done-badge-count {
+      background: var(--col-done-h);
+      color: #3fb950;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
     }
     .board {
       display: flex;
@@ -562,6 +590,18 @@
       font-weight: 600;
       font-family: "JetBrains Mono", Consolas, monospace;
     }
+    .metric-value {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      font-weight: 600;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      pointer-events: none;
+      opacity: 0.85;
+      text-shadow: 0 0 4px rgba(0,0,0,0.8);
+    }
     .metric-bar-wrap {
       height: 6px;
       background: var(--border);
@@ -573,9 +613,12 @@
       border-radius: 3px;
       transition: width 0.4s ease;
     }
-    .bar-green  { color: #3fb950; background: #3fb950; }
-    .bar-yellow { color: #e3b341; background: #e3b341; }
-    .bar-red    { color: #f85149; background: #f85149; }
+    .bar-green  { color: #3fb950; }
+    .bar-yellow { color: #e3b341; }
+    .bar-red    { color: #f85149; }
+    .metric-bar.bar-green  { background: #3fb950; }
+    .metric-bar.bar-yellow { background: #e3b341; }
+    .metric-bar.bar-red    { background: #f85149; }
     .metric-detail {
       font-size: 11px;
       color: var(--muted);
@@ -661,7 +704,7 @@
   <div class="app">
     <header class="topbar">
       <div class="header-left">
-        <div class="logo">Ops<span>Dashboard</span></div>
+        <div class="logo">OpsDashboard</div>
       </div>
       <div class="header-right">
         <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
@@ -673,10 +716,16 @@
       <section class="panel" id="kanban">
         <div class="panel-header">
           <span>Kanban</span>
-          <div class="toolbar" id="toolbar"></div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="done-badge" id="done-badge">
+              ✓ Done <span class="done-badge-count" id="done-badge-count">0</span>
+            </div>
+            <div class="scroll-hint" id="scroll-hint">scroll → more columns</div>
+            <div class="toolbar" id="toolbar"></div>
+          </div>
         </div>
-        <div class="panel-body">
-          <div class="board-wrapper">
+        <div class="panel-body" style="padding:0;">
+          <div class="board-wrapper" id="board-wrapper">
             <div id="board-root"></div>
           </div>
         </div>
@@ -844,6 +893,25 @@
       }).join("");
 
       document.getElementById("board-root").innerHTML = `<div class="board">${html}</div>`;
+
+      // Show done badge (visible without scrolling)
+      const doneCount = byCol["done"].length;
+      const doneBadge = document.getElementById("done-badge");
+      const doneBadgeCount = document.getElementById("done-badge-count");
+      if (doneBadge && doneBadgeCount) {
+        doneBadgeCount.textContent = doneCount;
+        doneBadge.className = doneCount > 0 ? "done-badge visible" : "done-badge";
+      }
+
+      // Show scroll hint if board overflows
+      setTimeout(() => {
+        const wrapper = document.getElementById("board-wrapper");
+        const hint = document.getElementById("scroll-hint");
+        if (wrapper && hint) {
+          const hasScroll = wrapper.scrollWidth > wrapper.clientWidth + 8;
+          hint.className = hasScroll ? "scroll-hint visible" : "scroll-hint";
+        }
+      }, 50);
     }
 
     async function loadKanban() {
@@ -936,19 +1004,26 @@
       return `<span class="agent-status-dot status-unknown" title="Unknown"></span>`;
     }
 
+    function shortWorkspace(ws) {
+      if (!ws) return "";
+      // /Users/aivan/agents/lain → agents/lain
+      return ws.replace(/^\/[^/]+\/[^/]+\//, "");
+    }
+
     function agentCardHtml(a) {
       const emoji = a.emoji ? `<span class="agent-emoji">${escHtml(a.emoji)}</span>` : `<span class="agent-emoji">🤖</span>`;
       const name = escHtml(a.name || a.id || "—");
       const dot = agentStatusDot(a.status);
       const lastSeen = a.last_seen ? `<span class="agent-last-seen">${relTime(a.last_seen)}</span>` : "";
       const model = a.model ? `<div class="agent-model">${escHtml(a.model.replace("anthropic/",""))}</div>` : "";
+      const ws = a.workspace ? `<div class="agent-workspace" title="${escHtml(a.workspace)}">${escHtml(shortWorkspace(a.workspace))}</div>` : "";
       const statusLabel = a.status ? `<span class="agent-status-label agent-status-${escHtml(a.status)}">${escHtml(a.status)}</span>` : "";
       return `
         <div class="agent-card">
           ${emoji}
           <div class="agent-info">
             <div class="agent-name-row">${dot}<span class="agent-name">${name}</span>${statusLabel}${lastSeen}</div>
-            ${model}
+            ${model}${ws}
           </div>
         </div>`;
     }
@@ -1012,8 +1087,9 @@
             <span class="metric-label">${escHtml(label)}</span>
             <span class="metric-pct ${cls}">${pct.toFixed(1)}%</span>
           </div>
-          <div class="metric-bar-wrap">
+          <div class="metric-bar-wrap" style="position:relative;">
             <div class="metric-bar ${cls}" style="width:${w}%"></div>
+            <span class="metric-value mono ${cls}">${pct.toFixed(1)}%</span>
           </div>
           ${detailHtml}
         </div>`;
@@ -1063,16 +1139,49 @@
         containersHtml;
     }
 
-    // Legacy alias used for backward compat
-    function renderMac(server) { renderServerMetrics(server, "mac-root", "mac-label"); }
-    function renderHetzner(server, error) {
-      if (error || !server) {
-        document.getElementById("hetzner-root").innerHTML =
-          `<div class="status-error"><div class="status-error-icon">!</div><div><div>Server metrics error</div><div class="status-error-detail">${escHtml(error || "no data")}</div></div></div>`;
-        document.getElementById("hetzner-label").textContent = "offline";
+    function renderContainersPanel(server) {
+      const labelEl = document.getElementById("hetzner-label");
+      const rootEl = document.getElementById("hetzner-root");
+
+      if (!server) {
+        rootEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🐳</div>
+            <div>No server data</div>
+            <div class="empty-state-detail">Server metrics unavailable</div>
+          </div>`;
+        labelEl.textContent = "—";
         return;
       }
-      renderServerMetrics(server, "hetzner-root", "hetzner-label");
+
+      const containers = Array.isArray(server.containers) ? server.containers : [];
+
+      if (containers.length === 0) {
+        rootEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🐳</div>
+            <div>Docker socket not mounted</div>
+            <div class="empty-state-detail">Mount /var/run/docker.sock to show containers</div>
+          </div>`;
+        labelEl.textContent = "0 containers";
+        return;
+      }
+
+      labelEl.textContent = `${containers.length} container${containers.length !== 1 ? "s" : ""}`;
+      const rows = containers.map(c => {
+        const name = c.Names || c.Name || c.ID || "?";
+        const image = c.Image || "";
+        const status = (c.Status || c.State || "").toLowerCase();
+        const dotColor = status.includes("up") || status.includes("running")
+          ? "#3fb950" : "#f85149";
+        return `
+          <div class="container-row">
+            <span class="container-dot" style="background:${dotColor}"></span>
+            <span class="container-name">${escHtml(name)}</span>
+            <span class="container-image">${escHtml(image)}</span>
+          </div>`;
+      }).join("");
+      rootEl.innerHTML = `<div class="containers-label">Running containers</div>${rows}`;
     }
 
     async function loadSystem() {
@@ -1080,11 +1189,17 @@
         const res = await fetch("/api/system");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        // server = local psutil (Hetzner), render in both panels
-        const server = data.server || data.hetzner;
+        // server = local psutil (Hetzner), mac = mac metrics
+        const server = data.server || data.hetzner || data.mac;
         const serverErr = data.server_error || data.hetzner_error;
-        renderServerMetrics(server, "mac-root", "mac-label");
-        renderHetzner(server, serverErr);
+        if (serverErr) {
+          document.getElementById("mac-root").innerHTML =
+            `<div class="status-error"><div class="status-error-icon">!</div><div><div>Metrics error</div><div class="status-error-detail">${escHtml(serverErr)}</div></div></div>`;
+          document.getElementById("mac-label").textContent = "error";
+        } else {
+          renderServerMetrics(server, "mac-root", "mac-label");
+        }
+        renderContainersPanel(server);
       } catch (err) {
         document.getElementById("mac-root").innerHTML =
           `<div class="empty-panel" style="color:#f85149">Error: ${escHtml(err.message)}</div>`;
