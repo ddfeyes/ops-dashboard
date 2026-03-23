@@ -5,8 +5,16 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
+
+try:
+    import urllib.request as _urllib_request
+    import urllib.error as _urllib_error
+except ImportError:
+    _urllib_request = None  # type: ignore
+    _urllib_error = None  # type: ignore
 
 # OpenClaw config candidates (in priority order)
 _OPENCLAW_CONFIG_PATHS = [
@@ -22,12 +30,67 @@ _STATIC_AGENTS_JSON = os.getenv("OPENCLAW_AGENTS_JSON", "")
 # Optional: inject AO sessions via env var (JSON array)
 _STATIC_AO_SESSIONS_JSON = os.getenv("AO_SESSIONS_JSON", "")
 
+# Optional: OpenClaw gateway URL for live session data
+# e.g. http://host.docker.internal:18789 or http://172.17.0.1:18789
+_OPENCLAW_GATEWAY_URL = os.getenv("OPENCLAW_GATEWAY_URL", "http://host.docker.internal:18789")
+
+# Active threshold: sessions active within this many seconds are "active"
+_ACTIVE_THRESHOLD_SECS = 300  # 5 minutes
+
 
 def _find_openclaw_config() -> Path | None:
     for p in _OPENCLAW_CONFIG_PATHS:
         if p.exists():
             return p
     return None
+
+
+def _fetch_gateway_sessions() -> dict[str, dict]:
+    """Fetch live session data from OpenClaw gateway. Returns dict keyed by agent id."""
+    if not _OPENCLAW_GATEWAY_URL or _urllib_request is None:
+        return {}
+    try:
+        url = f"{_OPENCLAW_GATEWAY_URL.rstrip('/')}/sessions"
+        req = _urllib_request.Request(url, headers={"Accept": "application/json"})
+        with _urllib_request.urlopen(req, timeout=3) as resp:
+            raw = resp.read().decode("utf-8")
+            data = json.loads(raw)
+            # data is expected to be a list of session objects or dict
+            sessions_list = data if isinstance(data, list) else data.get("sessions", [])
+            # Build lookup: agentId -> latest session info
+            by_agent: dict[str, dict] = {}
+            now_ms = int(time.time() * 1000)
+            for s in sessions_list:
+                agent_id = s.get("agentId") or s.get("agent_id") or s.get("id", "")
+                # Strip channel prefix if present (e.g. "agent:lain:...")
+                parts = agent_id.split(":")
+                short_id = parts[1] if len(parts) >= 2 and parts[0] == "agent" else agent_id
+                last_active_ms = s.get("lastActiveAt") or s.get("last_active_at") or s.get("updatedAt") or 0
+                if not last_active_ms:
+                    last_active_ms = s.get("createdAt") or 0
+                status = "active" if (now_ms - last_active_ms) < _ACTIVE_THRESHOLD_SECS * 1000 else "idle"
+                # Keep the most recent session per agent
+                existing = by_agent.get(short_id)
+                if existing is None or last_active_ms > (existing.get("_last_ms") or 0):
+                    by_agent[short_id] = {
+                        "status": status,
+                        "last_seen": last_active_ms,
+                        "last_seen_iso": _ms_to_iso(last_active_ms),
+                        "_last_ms": last_active_ms,
+                    }
+            return by_agent
+    except Exception:
+        return {}
+
+
+def _ms_to_iso(ms: int) -> str | None:
+    if not ms:
+        return None
+    try:
+        import datetime
+        return datetime.datetime.fromtimestamp(ms / 1000, tz=datetime.timezone.utc).isoformat()
+    except Exception:
+        return None
 
 
 def get_ao_sessions() -> list[dict[str, Any]]:
@@ -82,42 +145,60 @@ def get_ao_sessions() -> list[dict[str, Any]]:
 
 
 def get_openclaw_agents() -> list[dict[str, Any]]:
-    """Read OpenClaw agent configs and return the agent list.
+    """Read OpenClaw agent configs and return the agent list with live status.
     
     Falls back to OPENCLAW_AGENTS_JSON env var if config file not found.
+    Enriches agents with live status from OpenClaw gateway if reachable.
     """
     # Try env var override first
+    base_agents: list[dict[str, Any]] = []
     if _STATIC_AGENTS_JSON:
         try:
             raw = json.loads(_STATIC_AGENTS_JSON)
             if isinstance(raw, list):
-                return raw
+                base_agents = raw
         except json.JSONDecodeError:
             pass
 
-    # Try reading config file
-    config_path = _find_openclaw_config()
-    if config_path is None:
-        return []
+    if not base_agents:
+        # Try reading config file
+        config_path = _find_openclaw_config()
+        if config_path is None:
+            return []
+        try:
+            with config_path.open() as f:
+                config: dict = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return []
+        agent_list: list[dict] = config.get("agents", {}).get("list", [])
+        for agent in agent_list:
+            identity = agent.get("identity", {})
+            base_agents.append(
+                {
+                    "id": agent.get("id"),
+                    "name": identity.get("name") or agent.get("name") or agent.get("id"),
+                    "model": agent.get("model"),
+                    "workspace": agent.get("workspace"),
+                    "emoji": identity.get("emoji"),
+                }
+            )
 
-    try:
-        with config_path.open() as f:
-            config: dict = json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return []
+    # Enrich with live session data from gateway
+    live_sessions = _fetch_gateway_sessions()
 
-    agent_list: list[dict] = config.get("agents", {}).get("list", [])
     agents = []
-    for agent in agent_list:
-        identity = agent.get("identity", {})
-        model = agent.get("model")
+    for agent in base_agents:
+        agent_id = agent.get("id") or ""
+        live = live_sessions.get(agent_id, {})
         agents.append(
             {
-                "id": agent.get("id"),
-                "name": identity.get("name") or agent.get("name") or agent.get("id"),
-                "model": model,
+                "id": agent_id,
+                "name": agent.get("name") or agent_id,
+                "model": agent.get("model"),
                 "workspace": agent.get("workspace"),
-                "emoji": identity.get("emoji"),
+                "emoji": agent.get("emoji"),
+                "status": live.get("status"),        # "active" | "idle" | None
+                "last_seen": live.get("last_seen_iso"),  # ISO timestamp or None
             }
         )
     return agents

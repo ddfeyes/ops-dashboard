@@ -1,7 +1,7 @@
 project: ops-dashboard
-status: REVIEW
+status: DEPLOY
 current_module: M6
-last_updated: '2026-03-23T14:58:00Z'
+last_updated: '2026-03-23T15:06:00Z'
 modules:
 - id: M1
   name: Backend API
@@ -11,32 +11,32 @@ modules:
   status: DONE
 - id: M3
   name: Frontend — Agent Monitor
-  status: REVIEW
+  status: DEPLOY
   issues: [25, 28]
-  notes: 'ao sentinel + OPENCLAW_AGENTS_JSON injected into docker-compose. 19 agents will show after deploy. PR merged main (9702ae6, 97545b1).'
+  notes: 'ao sentinel + OPENCLAW_AGENTS_JSON injected into docker-compose. 19 agents will show after deploy. PR merged main (9702ae6, 97545b1). Masami LGTM 2026-03-23.'
   priority: P0
 - id: M4
   name: Frontend — System Metrics
-  status: REVIEW
+  status: DEPLOY
   issues: [26]
-  notes: 'psutil relabeled as Hetzner Server. Docker containers via CLI. Mac panel only if MAC_SSH_HOST env set. PR merged main (9702ae6).'
+  notes: 'psutil relabeled as Hetzner Server. Docker containers via CLI. Mac panel only if MAC_SSH_HOST env set. PR merged main (9702ae6). Masami LGTM 2026-03-23.'
   priority: P0
 - id: M5
   name: Integration & Deploy
   status: DONE
 - id: M6
   name: Bug fixes + Design
-  status: REVIEW
+  status: DEPLOY
   issues: [25, 26, 27, 28]
-  notes: 'M3+M4 fixes on main. OPENCLAW_AGENTS_JSON docker-compose injection added (97545b1). Awaiting Masami review then NAVI deploy.'
+  notes: 'M3+M4 fixes on main. OPENCLAW_AGENTS_JSON docker-compose injection added (97545b1). Masami LGTM on 9702ae6. DEPLOY_REQUEST sent to NAVI 2026-03-23T15:06Z.'
   priority: P0
-pipeline_state: REVIEW
-pipeline_notes: 'All fixes on main (97545b1). Waiting for Masami review before NAVI deploy. 3 commits to deploy: 9702ae6, 97545b1.'
+pipeline_state: DEPLOY
+pipeline_notes: 'Masami LGTM 2026-03-23. DEPLOY_REQUEST sent to NAVI (commit 97545b1). Waiting for NAVI to deploy then verify live URL.'
 pr:
   number: null
   branch: main
   commit: 97545b1
   description: 'fix: M3+M4+docker-compose — relabel metrics, ao sentinel, OPENCLAW_AGENTS_JSON injection'
 blockers:
-- 'Masami review pending'
+- 'NAVI deploying — waiting for confirmation'
 - 'Design: needs Mika spec after functionality verified post-deploy'
