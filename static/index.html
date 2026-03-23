@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ops Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -37,22 +38,28 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-family: "Inter", system-ui, sans-serif;
       font-size: 14px;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
 
     /* ── Header ── */
-    header {
+    .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 24px;
+      height: 48px;
+      flex-shrink: 0;
+      padding: 0 16px;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
-      position: sticky;
-      top: 0;
-      z-index: 10;
     }
     .header-left { display: flex; align-items: center; gap: 12px; }
     .logo { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
@@ -78,31 +85,83 @@
     }
     #status.error { color: #f85149; }
 
-    /* ── Scroll anchor offset (sticky header ~54px) ── */
-    .board-wrapper, .agents-wrapper, .system-wrapper {
-      scroll-margin-top: 60px;
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+      height: calc(100vh - 48px);
+      padding: 12px;
+      min-height: 0;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .panel-header {
+      height: 40px;
+      flex-shrink: 0;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #21262d;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px;
+    }
+
+    .panel-body::-webkit-scrollbar { width: 3px; }
+    .panel-body::-webkit-scrollbar-track { background: transparent; }
+    .panel-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+
+    .mono {
+      font-family: "JetBrains Mono", Consolas, monospace;
     }
 
     /* ── Board ── */
     .board-wrapper {
-      padding: 20px 24px 40px;
+      padding: 0;
+      height: 100%;
       overflow-x: auto;
     }
     .board {
       display: flex;
-      gap: 16px;
+      gap: 0;
       min-width: 900px;
-      align-items: flex-start;
+      align-items: stretch;
+      height: 100%;
     }
 
     /* ── Column ── */
     .column {
       flex: 1;
       min-width: 200px;
-      max-width: 300px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
+      max-width: 340px;
+      border-radius: 0;
+      border: none;
       overflow: hidden;
+    }
+    .column + .column {
+      border-left: 1px solid var(--border);
     }
     .col-header {
       padding: 10px 14px;
@@ -154,7 +213,7 @@
       font-size: 11px;
       color: var(--muted);
       margin-bottom: 4px;
-      font-family: "SFMono-Regular", Consolas, monospace;
+      font-family: "JetBrains Mono", Consolas, monospace;
     }
     .card-title {
       font-size: 13px;
@@ -264,7 +323,6 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 24px 0;
       flex-wrap: wrap;
     }
     .toolbar-label { font-size: 12px; color: var(--muted); }
@@ -282,43 +340,6 @@
     .filter-btn:hover:not(.active) { border-color: var(--muted); color: var(--text); }
 
     /* ── Agent Monitor ── */
-    .agents-wrapper {
-      padding: 0 24px 40px;
-    }
-    .section-title {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--muted);
-      margin-bottom: 12px;
-      padding-top: 4px;
-      border-top: 1px solid var(--border);
-    }
-    .agents-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .agents-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .panel-header {
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #21262d;
-      font-weight: 600;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--muted);
-      border-bottom: 1px solid var(--border);
-    }
     .panel-count {
       background: rgba(255,255,255,0.08);
       padding: 1px 7px;
@@ -326,7 +347,25 @@
       font-size: 11px;
       font-weight: 500;
     }
-    .panel-body { padding: 10px; }
+
+    .agent-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0 4px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6e7681;
+      border-top: 1px solid #21262d;
+      margin-top: 10px;
+    }
+    .agent-section-header:first-child {
+      border-top: none;
+      margin-top: 0;
+      padding-top: 0;
+    }
 
     /* Session rows */
     .session-row {
@@ -363,7 +402,7 @@
     .session-branch {
       font-size: 11px;
       color: var(--accent);
-      font-family: "SFMono-Regular", Consolas, monospace;
+      font-family: "JetBrains Mono", Consolas, monospace;
       margin-top: 2px;
       white-space: nowrap;
       overflow: hidden;
@@ -438,7 +477,7 @@
     .agent-model {
       font-size: 11px;
       color: var(--muted);
-      font-family: "SFMono-Regular", Consolas, monospace;
+      font-family: "JetBrains Mono", Consolas, monospace;
       margin-top: 2px;
     }
     .agent-workspace {
@@ -457,15 +496,27 @@
       opacity: 0.6;
     }
 
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 100%;
+      min-height: 140px;
+      color: #6e7681;
+      font-size: 12px;
+    }
+    .empty-state-icon {
+      font-size: 22px;
+      opacity: 0.45;
+    }
+    .empty-state-detail {
+      font-size: 11px;
+      color: #484f58;
+    }
+
     /* ── System Metrics ── */
-    .system-wrapper {
-      padding: 0 24px 40px;
-    }
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
     .metric-row { margin-bottom: 12px; }
     .metric-row:last-child { margin-bottom: 0; }
     .metric-label-row {
@@ -484,7 +535,7 @@
     .metric-pct {
       font-size: 12px;
       font-weight: 600;
-      font-family: "SFMono-Regular", Consolas, monospace;
+      font-family: "JetBrains Mono", Consolas, monospace;
     }
     .metric-bar-wrap {
       height: 6px;
@@ -504,7 +555,7 @@
       font-size: 11px;
       color: var(--muted);
       margin-top: 3px;
-      font-family: "SFMono-Regular", Consolas, monospace;
+      font-family: "JetBrains Mono", Consolas, monospace;
     }
     .metric-divider { height: 1px; background: var(--border); margin: 12px 0; }
     .containers-label {
@@ -536,7 +587,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-family: "SFMono-Regular", Consolas, monospace;
+      font-family: "JetBrains Mono", Consolas, monospace;
     }
     .container-image {
       font-size: 10px;
@@ -547,98 +598,101 @@
       max-width: 110px;
     }
 
-    /* ── Nav ── */
-    .nav { display: flex; gap: 2px; margin-left: 16px; }
-    .nav-link {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 13px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      transition: color 0.15s, background 0.15s;
+    .status-error {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid #8b1a1a55;
+      border-radius: 8px;
+      background: #2d0d0d66;
+      color: #f85149;
+      font-size: 12px;
     }
-    .nav-link:hover { color: var(--text); background: var(--border); }
-    .nav-link.active { color: var(--accent); background: #0d2245; }
+    .status-error-icon { font-size: 14px; line-height: 1.2; }
+    .status-error-detail {
+      font-size: 11px;
+      color: #8b949e;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      margin-top: 2px;
+    }
 
     @media (max-width: 768px) {
+      body { overflow-y: auto; height: auto; }
+      .app { height: auto; }
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, 360px);
+        height: auto;
+      }
       .board { min-width: unset; flex-direction: column; }
       .column { max-width: 100%; }
-      header { flex-wrap: wrap; gap: 8px; }
-      .nav { margin-left: 0; }
-      .agents-grid { grid-template-columns: 1fr; }
-      .metrics-grid { grid-template-columns: 1fr; }
+      .column + .column { border-left: none; border-top: 1px solid var(--border); }
+      .topbar { height: auto; padding: 10px 12px; gap: 8px; flex-wrap: wrap; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-left">
-      <div class="logo">Ops<span>Dashboard</span></div>
-      <nav class="nav">
-        <a class="nav-link" href="#kanban">Kanban</a>
-        <a class="nav-link" href="#agents">Agents</a>
-        <a class="nav-link" href="#system">System</a>
-      </nav>
-    </div>
-    <div class="header-right">
-      <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
-      <div id="status">Loading…</div>
-    </div>
-  </header>
-
-  <div class="toolbar" id="toolbar"></div>
-
-  <div class="board-wrapper" id="kanban">
-    <div class="section-title">Kanban</div>
-    <div id="board-root"></div>
-  </div>
-
-  <div class="agents-wrapper" id="agents">
-    <div class="section-title">Agent Monitor</div>
-    <div class="agents-grid">
-      <div class="agents-panel">
-        <div class="panel-header">
-          <span>AO Sessions</span>
-          <span class="panel-count" id="sessions-count">—</span>
-        </div>
-        <div class="panel-body" id="sessions-root">
-          <div class="empty-panel">Loading…</div>
-        </div>
+  <div class="app">
+    <header class="topbar">
+      <div class="header-left">
+        <div class="logo">Ops<span>Dashboard</span></div>
       </div>
-      <div class="agents-panel">
-        <div class="panel-header">
-          <span>OpenClaw Agents</span>
-          <span class="panel-count" id="agents-count">—</span>
-        </div>
-        <div class="panel-body" id="agents-root">
-          <div class="empty-panel">Loading…</div>
-        </div>
+      <div class="header-right">
+        <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+        <div id="status" class="mono">Loading…</div>
       </div>
-    </div>
-  </div>
+    </header>
 
-  <div class="system-wrapper" id="system">
-    <div class="section-title">System Metrics</div>
-    <div class="metrics-grid">
-      <div class="agents-panel">
+    <main class="dashboard-grid">
+      <section class="panel" id="kanban">
         <div class="panel-header">
-          <span>Mac</span>
-          <span class="panel-count" id="mac-label">local</span>
+          <span>Kanban</span>
+          <div class="toolbar" id="toolbar"></div>
+        </div>
+        <div class="panel-body">
+          <div class="board-wrapper">
+            <div id="board-root"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="agents">
+        <div class="panel-header"><span>Agent Monitor</span></div>
+        <div class="panel-body">
+          <div class="agent-section-header">
+            <span>AO Sessions</span>
+            <span class="panel-count" id="sessions-count">—</span>
+          </div>
+          <div id="sessions-root"><div class="empty-panel">Loading…</div></div>
+          <div class="agent-section-header">
+            <span>OpenClaw Agents</span>
+            <span class="panel-count" id="agents-count">—</span>
+          </div>
+          <div id="agents-root"><div class="empty-panel">Loading…</div></div>
+        </div>
+      </section>
+
+      <section class="panel" id="system-mac">
+        <div class="panel-header">
+          <span>System Metrics</span>
+          <span class="panel-count mono" id="mac-label">local</span>
         </div>
         <div class="panel-body" id="mac-root">
           <div class="empty-panel">Loading…</div>
         </div>
-      </div>
-      <div class="agents-panel">
+      </section>
+
+      <section class="panel" id="system-hetzner">
         <div class="panel-header">
           <span>Hetzner</span>
-          <span class="panel-count" id="hetzner-label">—</span>
+          <span class="panel-count mono" id="hetzner-label">—</span>
         </div>
         <div class="panel-body" id="hetzner-root">
           <div class="empty-panel">Loading…</div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   </div>
 
   <script>
@@ -701,8 +755,9 @@
     }
 
     function escHtml(s) {
-      return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-              .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+      const text = String(s ?? "");
+      return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+                 .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
     }
 
     function getRepos(cards) {
@@ -874,11 +929,11 @@
 
       document.getElementById("sessions-root").innerHTML = sessions.length
         ? sessions.map(sessionHtml).join("")
-        : `<div class="empty-panel">No active sessions</div>`;
+        : `<div class="empty-state"><div class="empty-state-icon">IDLE</div><div>No active sessions</div><div class="empty-state-detail">Waiting for AO session activity</div></div>`;
 
       document.getElementById("agents-root").innerHTML = agentList.length
         ? agentList.map(agentCardHtml).join("")
-        : `<div class="empty-panel">No agents configured</div>`;
+        : `<div class="empty-state"><div class="empty-state-icon">BOT</div><div>No agents configured</div><div class="empty-state-detail">Add OpenClaw agents to populate this panel</div></div>`;
     }
 
     let agentsRefreshTimer = null;
@@ -891,8 +946,9 @@
         renderAgents(data);
       } catch (err) {
         document.getElementById("sessions-root").innerHTML =
-          `<div class="empty-panel" style="color:#f85149">Error: ${escHtml(err.message)}</div>`;
-        document.getElementById("agents-root").innerHTML = "";
+          `<div class="status-error"><div class="status-error-icon">!</div><div><div>Agent monitor unavailable</div><div class="status-error-detail">${escHtml(err.message)}</div></div></div>`;
+        document.getElementById("agents-root").innerHTML =
+          `<div class="empty-state"><div class="empty-state-icon">WAIT</div><div>Awaiting agent data</div></div>`;
       }
     }
 
@@ -942,7 +998,7 @@
     function renderHetzner(hetzner, error) {
       if (error || !hetzner) {
         document.getElementById("hetzner-root").innerHTML =
-          `<div class="empty-panel" style="color:#f85149">SSH error: ${escHtml(error || "no data")}</div>`;
+          `<div class="status-error"><div class="status-error-icon">!</div><div><div>Hetzner connection failed</div><div class="status-error-detail">SSH error: ${escHtml(error || "no data")}</div></div></div>`;
         document.getElementById("hetzner-label").textContent = "offline";
         return;
       }
@@ -989,7 +1045,7 @@
         document.getElementById("mac-root").innerHTML =
           `<div class="empty-panel" style="color:#f85149">Error: ${escHtml(err.message)}</div>`;
         document.getElementById("hetzner-root").innerHTML =
-          `<div class="empty-panel" style="color:#f85149">Error: ${escHtml(err.message)}</div>`;
+          `<div class="status-error"><div class="status-error-icon">!</div><div><div>Hetzner metrics unavailable</div><div class="status-error-detail">${escHtml(err.message)}</div></div></div>`;
       }
     }
 
@@ -999,28 +1055,10 @@
       loadSystem();
     }
 
-    // ── Active nav on scroll ────────────────────────────────────────
-    const NAV_SECTIONS = ["kanban", "agents", "system"];
-
-    function updateActiveNav() {
-      const scrollY = window.scrollY + 90;
-      let active = NAV_SECTIONS[0];
-      for (const id of NAV_SECTIONS) {
-        const el = document.getElementById(id);
-        if (el && el.offsetTop <= scrollY) active = id;
-      }
-      document.querySelectorAll(".nav-link").forEach(link => {
-        link.classList.toggle("active", link.getAttribute("href") === "#" + active);
-      });
-    }
-
-    window.addEventListener("scroll", updateActiveNav, { passive: true });
-
     // Initial load
     document.getElementById("board-root").innerHTML =
       `<div class="loading-overlay"><div class="spinner"></div><span>Loading kanban…</span></div>`;
     loadAll();
-    updateActiveNav();
 
     // Refresh all panels every 30s
     agentsRefreshTimer = setInterval(loadAgents, 30000);

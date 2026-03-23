@@ -100,26 +100,38 @@ def _build_card(
 
 
 def fetch_kanban_cards() -> list[dict]:
-    """Fetch issues and PRs from configured repos and return kanban cards."""
+    """Fetch issues and PRs from configured repos and return kanban cards.
+
+    Returns an empty list when gh CLI is unavailable or unauthenticated so
+    that the endpoint always responds with 200 (the frontend shows an empty
+    board rather than crashing).
+    """
     repos = _get_repos()
     cards: list[dict] = []
 
     for repo in repos:
-        issues = _run_gh([
-            "issue", "list",
-            "--repo", repo,
-            "--state", "all",
-            "--limit", "200",
-            "--json", "number,title,labels,assignees,createdAt,closedAt,url,state,body",
-        ])
+        try:
+            issues = _run_gh([
+                "issue", "list",
+                "--repo", repo,
+                "--state", "all",
+                "--limit", "200",
+                "--json", "number,title,labels,assignees,createdAt,closedAt,url,state,body",
+            ])
+        except Exception:
+            # gh not available or not authenticated — skip this repo
+            continue
 
-        open_prs = _run_gh([
-            "pr", "list",
-            "--repo", repo,
-            "--state", "open",
-            "--limit", "100",
-            "--json", "number,title,labels,assignees,createdAt,url,state,body,isDraft,headRefName",
-        ])
+        try:
+            open_prs = _run_gh([
+                "pr", "list",
+                "--repo", repo,
+                "--state", "open",
+                "--limit", "100",
+                "--json", "number,title,labels,assignees,createdAt,url,state,body,isDraft,headRefName",
+            ])
+        except Exception:
+            open_prs = []
 
         # Map issue number → linked open PR
         pr_by_issue: dict[int, dict] = {}
