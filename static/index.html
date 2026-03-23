@@ -509,6 +509,8 @@
       flex-shrink: 0;
     }
     .status-active  { background: #3fb950; box-shadow: 0 0 4px #3fb95066; }
+    .status-idle    { background: #e3b341; }
+    .status-offline { background: #484f58; }
     .status-unknown { background: #30363d; }
     .agent-name {
       font-size: 13px;
@@ -523,8 +525,9 @@
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
-    .agent-status-active { color: #3fb950; background: #0d2818; }
-    .agent-status-idle   { color: #8b949e; background: #21262d; }
+    .agent-status-active  { color: #3fb950; background: #0d2818; }
+    .agent-status-idle    { color: #e3b341; background: #2b2006; }
+    .agent-status-offline { color: #8b949e; background: #21262d; }
     .agent-last-seen {
       font-size: 10px;
       color: #484f58;
@@ -1007,8 +1010,9 @@
     }
 
     function agentStatusDot(status) {
-      if (status === "active") return `<span class="agent-status-dot status-active" title="Active"></span>`;
-      if (status === "idle")   return `<span class="agent-status-dot status-idle" title="Idle"></span>`;
+      if (status === "active")  return `<span class="agent-status-dot status-active" title="Active"></span>`;
+      if (status === "idle")    return `<span class="agent-status-dot status-idle" title="Idle"></span>`;
+      if (status === "offline") return `<span class="agent-status-dot status-offline" title="Offline"></span>`;
       return `<span class="agent-status-dot status-unknown" title="Unknown"></span>`;
     }
 
