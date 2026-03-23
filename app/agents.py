@@ -111,6 +111,8 @@ def _fetch_gateway_sessions() -> dict[str, dict]:
         return {}
     try:
         url = f"{_OPENCLAW_GATEWAY_URL.rstrip('/')}/api/sessions"
+        if not url.startswith(("http://", "https://")):
+            return {}
         req = _urllib_request.Request(url, headers={"Accept": "application/json"})
         with _urllib_request.urlopen(req, timeout=3) as resp:
             raw = resp.read().decode("utf-8")
@@ -253,7 +255,7 @@ def get_openclaw_agents() -> list[dict[str, Any]]:
                 "workspace": agent.get("workspace"),
                 "emoji": agent.get("emoji"),
                 "status": live.get("status"),        # "active" | "idle" | None
-                "last_seen": live.get("last_seen_iso"),  # ISO timestamp or None
+                "last_seen": live.get("last_seen_iso") or live.get("last_seen"),  # ISO timestamp or None
             }
         )
     return agents
