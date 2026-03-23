@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import socket
 import subprocess
 from typing import Any
 
@@ -58,7 +59,15 @@ def get_server_metrics() -> dict[str, Any]:
         "containers": containers,
         "container_count": len(containers),
         "label": "Hetzner Server",
+        "hostname": _get_hostname(),
     }
+
+
+def _get_hostname() -> str:
+    try:
+        return socket.gethostname()
+    except Exception:
+        return ""
 
 
 def _get_docker_containers() -> list[dict[str, Any]]:
