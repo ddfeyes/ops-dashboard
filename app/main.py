@@ -66,10 +66,13 @@ async def kanban() -> list[dict]:
 async def agents() -> dict[str, Any]:
     """Return AO sessions and OpenClaw agent list."""
     loop = asyncio.get_running_loop()
-    sessions, agent_list = await asyncio.gather(
+    results = await asyncio.gather(
         loop.run_in_executor(_executor, get_ao_sessions),
         loop.run_in_executor(_executor, get_openclaw_agents),
+        return_exceptions=True,
     )
+    sessions = results[0] if not isinstance(results[0], BaseException) else []
+    agent_list = results[1] if not isinstance(results[1], BaseException) else []
     return {"sessions": sessions, "agents": agent_list}
 
 
