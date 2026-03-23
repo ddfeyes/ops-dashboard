@@ -12,6 +12,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install fastapi uvicorn psutil paramiko httpx pytest
+      - run: pip install fastapi uvicorn psutil paramiko httpx pytest anyio[asyncio]
       - run: python -c "from app.main import app; print('import OK')"
       - run: pytest tests/ -v
