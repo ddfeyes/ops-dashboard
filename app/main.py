@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.agents import get_ao_sessions, get_openclaw_agents
 from app.kanban import fetch_kanban_cards
@@ -15,6 +18,10 @@ from app.system import get_hetzner_metrics, get_mac_metrics
 from app.usage import get_usage
 
 app = FastAPI(title="Ops Dashboard", version="0.1.0")
+
+_static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.isdir(_static_dir):
+    app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,6 +40,11 @@ _executor = ThreadPoolExecutor(max_workers=4)
 @app.on_event("shutdown")
 async def _shutdown() -> None:
     _executor.shutdown(wait=False)
+
+
+@app.get("/")
+async def root() -> FileResponse:
+    return FileResponse(os.path.join(_static_dir, "index.html"))
 
 
 @app.get("/api/health")
