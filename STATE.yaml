@@ -1,16 +1,30 @@
 project: ops-dashboard
 status: WORKING
 current_module:
-  id: M1
-  name: "Backend API"
-  status: WORKING
+  id: M2
+  name: "Frontend — Kanban"
+  status: working
 modules:
   - id: M1
     name: "Backend API"
-    status: WORKING
+    status: DONE
+    prs_merged:
+      - number: 7
+        title: "feat: GET /api/system — Mac + Hetzner metrics"
+        merged_at: "2026-03-23T03:20:42Z"
+      - number: 11
+        title: "feat: integrate all M1 endpoints — kanban, agents, system, usage"
+        merged_at: "2026-03-23T03:24:16Z"
+      - number: 12
+        title: "fix: apply Masami M1 review fixes (6 items)"
+        merged_at: "2026-03-23T03:36:00Z"
+    notes: >
+      All 5 M1 issues implemented, reviewed by Masami (APPROVE_WITH_FIXES),
+      and all 6 review fixes applied in follow-up PR #12 (CI passed, merged).
+      M1 is DONE.
   - id: M2
     name: "Frontend — Kanban"
-    status: pending
+    status: working
   - id: M3
     name: "Frontend — Agent Monitor"
     status: pending
