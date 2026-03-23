@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from typing import Any
 
 import paramiko
 import psutil
 
-HETZNER_HOST = "94.130.65.86"
-HETZNER_PORT = 2203
-HETZNER_USER = "user3"
+HETZNER_HOST = os.getenv("HETZNER_HOST", "94.130.65.86")
+HETZNER_PORT = int(os.getenv("HETZNER_PORT", "2203"))
+HETZNER_USER = os.getenv("HETZNER_USER", "user3")
 
 
 # ---------------------------------------------------------------------------

@@ -72,12 +72,7 @@ def get_openclaw_agents() -> list[dict[str, Any]]:
     agents = []
     for agent in agent_list:
         identity = agent.get("identity", {})
-        model = agent.get("model") or (
-            agent.get("agents", {})
-            .get("defaults", {})
-            .get("model", {})
-            .get("primary")
-        )
+        model = agent.get("model")
         agents.append(
             {
                 "id": agent.get("id"),
