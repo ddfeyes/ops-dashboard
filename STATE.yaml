@@ -1,5 +1,5 @@
 current_module: M5
-last_updated: '2026-03-23T06:00:00Z'
+last_updated: '2026-03-23T11:35:00Z'
 modules:
 - id: M1
   name: Backend API
@@ -38,3 +38,18 @@ modules:
   status: DONE
 project: ops-dashboard
 status: DONE
+design_fixes:
+  issue: 22
+  pr: 23
+  branch: feat/issue-22
+  commit: c8ed016
+  status: MERGED
+  merged_at: '2026-03-23T11:35:00Z'
+  applied:
+  - viewport lock (height 100vh)
+  - 2x2 CSS grid layout
+  - Inter + JetBrains Mono typography
+  - independent panel scrolling
+  - kanban column dividers
+  - empty/error state styling
+  - kanban graceful fallback (empty list when gh unauthenticated)
