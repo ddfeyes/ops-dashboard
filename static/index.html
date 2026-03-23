@@ -163,6 +163,7 @@
       color: #3fb950;
     }
     .done-badge.visible { display: flex; }
+    .done-badge:hover { opacity: 0.8; }
     .done-badge-count {
       background: rgba(63,185,80,0.15);
       color: #3fb950;
@@ -590,18 +591,17 @@
 
     .metric-value {
       flex-shrink: 0;
-      font-size: 10px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       font-family: "JetBrains Mono", Consolas, monospace;
-      min-width: 36px;
+      min-width: 40px;
       text-align: right;
-      opacity: 0.9;
+      opacity: 1;
       line-height: 1;
     }
     .metric-bar-outer {
       display: flex;
       align-items: center;
-      gap: 8px;
     }
     .metric-bar-wrap {
       flex: 1;
@@ -896,13 +896,19 @@
 
       document.getElementById("board-root").innerHTML = `<div class="board">${html}</div>`;
 
-      // Show done badge (visible without scrolling)
+      // Show done badge (visible without scrolling) — click to scroll to Done column
       const doneCount = byCol["done"].length;
       const doneBadge = document.getElementById("done-badge");
       const doneBadgeCount = document.getElementById("done-badge-count");
       if (doneBadge && doneBadgeCount) {
         doneBadgeCount.textContent = doneCount;
         doneBadge.className = doneCount > 0 ? "done-badge visible" : "done-badge";
+        doneBadge.onclick = () => {
+          const wrapper = document.getElementById("board-wrapper");
+          const doneCol = wrapper && wrapper.querySelector(".col-done");
+          if (doneCol) doneCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+        };
+        doneBadge.style.cursor = doneCount > 0 ? "pointer" : "";
       }
 
       // Show scroll hint if board overflows
@@ -1087,12 +1093,12 @@
         <div class="metric-row">
           <div class="metric-label-row">
             <span class="metric-label">${escHtml(label)}</span>
+            <span class="metric-value ${cls}">${pct.toFixed(1)}%</span>
           </div>
           <div class="metric-bar-outer">
             <div class="metric-bar-wrap">
               <div class="metric-bar ${cls}" style="width:${w}%"></div>
             </div>
-            <span class="metric-value ${cls}">${pct.toFixed(1)}%</span>
           </div>
           ${detailHtml}
         </div>`;
@@ -1137,14 +1143,24 @@
       }
 
       const containers = Array.isArray(server.containers) ? server.containers : [];
+      const dockerAvailable = server.docker_available !== false;
 
       if (containers.length === 0) {
-        rootEl.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">🐳</div>
-            <div>Docker socket not mounted</div>
-            <div class="empty-state-detail">Mount /var/run/docker.sock to show containers</div>
-          </div>`;
+        if (!dockerAvailable) {
+          rootEl.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🐳</div>
+              <div>Docker unavailable</div>
+              <div class="empty-state-detail">Mount /var/run/docker.sock to show containers</div>
+            </div>`;
+        } else {
+          rootEl.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🐳</div>
+              <div>No running containers</div>
+              <div class="empty-state-detail">Docker is connected — no containers running</div>
+            </div>`;
+        }
         labelEl.textContent = "0 containers";
         return;
       }

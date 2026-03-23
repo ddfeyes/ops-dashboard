@@ -41,7 +41,7 @@ def get_server_metrics() -> dict[str, Any]:
         pass
 
     # Docker containers (if docker socket is available)
-    containers = _get_docker_containers()
+    containers, docker_available = _get_docker_containers()
 
     return {
         "cpu_percent": cpu,
@@ -58,6 +58,7 @@ def get_server_metrics() -> dict[str, Any]:
         "temperatures": temps,
         "containers": containers,
         "container_count": len(containers),
+        "docker_available": docker_available,
         "label": "Hetzner Server",
         "hostname": _get_hostname(),
     }
@@ -70,8 +71,28 @@ def _get_hostname() -> str:
         return ""
 
 
-def _get_docker_containers() -> list[dict[str, Any]]:
-    """Return running docker containers via CLI (no socket needed if docker CLI is installed)."""
+def _get_docker_containers() -> tuple[list[dict[str, Any]], bool]:
+    """Return (containers, docker_available) via Docker SDK (socket) or CLI fallback."""
+    # Try Docker SDK first (uses /var/run/docker.sock — preferred inside containers)
+    try:
+        import docker as docker_sdk  # type: ignore
+        client = docker_sdk.DockerClient(base_url="unix:///var/run/docker.sock", timeout=8)
+        containers = client.containers.list()
+        result = []
+        for c in containers:
+            result.append({
+                "ID": c.short_id,
+                "Names": c.name,
+                "Image": c.image.tags[0] if c.image.tags else (c.image.short_id or ""),
+                "Status": c.status,
+                "State": c.status,
+            })
+        client.close()
+        return result, True
+    except Exception:
+        pass
+
+    # Fallback: docker CLI
     try:
         result = subprocess.run(
             ["docker", "ps", "--format", "{{json .}}"],
@@ -80,7 +101,7 @@ def _get_docker_containers() -> list[dict[str, Any]]:
             timeout=8,
         )
         if result.returncode != 0:
-            return []
+            return [], False
         containers = []
         for line in result.stdout.strip().splitlines():
             line = line.strip()
@@ -90,9 +111,9 @@ def _get_docker_containers() -> list[dict[str, Any]]:
                 containers.append(json.loads(line))
             except json.JSONDecodeError:
                 pass
-        return containers
+        return containers, True
     except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
-        return []
+        return [], False
 
 
 # ---------------------------------------------------------------------------
