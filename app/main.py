@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.system import get_mac_metrics, get_hetzner_metrics
+from app.usage import get_usage
 
 app = FastAPI(title="Ops Dashboard", version="0.1.0")
 
@@ -41,3 +42,9 @@ async def system_metrics() -> dict[str, Any]:
         "hetzner": hetzner,
         "hetzner_error": hetzner_error,
     }
+
+
+@app.get("/api/usage")
+async def api_usage() -> dict[str, Any]:
+    """Return Anthropic API usage parsed from local Claude Code session logs."""
+    return await asyncio.get_event_loop().run_in_executor(None, get_usage)
