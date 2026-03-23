@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.agents import get_ao_sessions, get_openclaw_agents
 from app.kanban import fetch_kanban_cards
-from app.system import get_hetzner_metrics, get_mac_metrics
+from app.system import get_hetzner_metrics, get_mac_metrics, get_server_metrics
 from app.usage import get_usage
 
 app = FastAPI(title="Ops Dashboard", version="0.1.0")
@@ -75,27 +75,40 @@ async def agents() -> dict[str, Any]:
 
 @app.get("/api/system")
 async def system_metrics() -> dict[str, Any]:
-    """Return Mac + Hetzner system metrics."""
+    """Return server (local/Hetzner) + optional Mac system metrics."""
     loop = asyncio.get_running_loop()
-    results = await asyncio.gather(
+    server_result, mac_result = await asyncio.gather(
+        loop.run_in_executor(_executor, get_server_metrics),
         loop.run_in_executor(_executor, get_mac_metrics),
-        loop.run_in_executor(_executor, get_hetzner_metrics),
         return_exceptions=True,
     )
-    mac = results[0]
-    hetzner_result = results[1]
 
-    hetzner: dict[str, Any] | None = None
-    hetzner_error: str | None = None
-    if isinstance(hetzner_result, BaseException):
-        hetzner_error = str(hetzner_result)
+    server: dict[str, Any] | None = None
+    server_error: str | None = None
+    if isinstance(server_result, BaseException):
+        server_error = str(server_result)
     else:
-        hetzner = hetzner_result
+        server = server_result
 
+    mac: dict[str, Any] | None = None
+    mac_error: str | None = None
+    if isinstance(mac_result, BaseException):
+        mac_error = str(mac_result)
+    elif mac_result is not None and "error" in mac_result:
+        mac_error = mac_result.get("error")
+        mac = None
+    else:
+        mac = mac_result
+
+    # Legacy keys for backward compat with old frontend
     return {
-        "mac": mac,
-        "hetzner": hetzner,
-        "hetzner_error": hetzner_error,
+        "server": server,
+        "server_error": server_error,
+        "mac": server,  # frontend "mac" panel now shows server metrics
+        "hetzner": server,  # keep legacy key
+        "hetzner_error": server_error,
+        "mac_remote": mac,
+        "mac_remote_error": mac_error,
     }
 
 
