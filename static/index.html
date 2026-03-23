@@ -1087,8 +1087,10 @@
             <span class="metric-label">${escHtml(label)}</span>
             <span class="metric-pct ${cls}">${pct.toFixed(1)}%</span>
           </div>
-          <div class="metric-bar-wrap" style="position:relative;">
-            <div class="metric-bar ${cls}" style="width:${w}%"></div>
+          <div style="position:relative;">
+            <div class="metric-bar-wrap">
+              <div class="metric-bar ${cls}" style="width:${w}%"></div>
+            </div>
             <span class="metric-value mono ${cls}">${pct.toFixed(1)}%</span>
           </div>
           ${detailHtml}
@@ -1108,35 +1110,14 @@
       const diskDetail = (disk.used_gb != null && disk.total_gb != null)
         ? `${disk.used_gb} GB / ${disk.total_gb} GB` : "";
 
-      // Docker containers (if present)
-      const containers = Array.isArray(server.containers) ? server.containers : [];
       if (labelId) {
-        document.getElementById(labelId).textContent = server.label || (containers.length ? `${containers.length} containers` : "live");
-      }
-
-      let containersHtml = "";
-      if (containers.length) {
-        const rows = containers.slice(0, 8).map(c => {
-          const name = c.Names || c.Name || c.ID || "?";
-          const image = c.Image || "";
-          return `
-            <div class="container-row">
-              <span class="container-dot"></span>
-              <span class="container-name">${escHtml(name)}</span>
-              <span class="container-image">${escHtml(image)}</span>
-            </div>`;
-        }).join("");
-        containersHtml = `
-          <div class="metric-divider"></div>
-          <div class="containers-label">Docker (${containers.length})</div>
-          ${rows}`;
+        document.getElementById(labelId).textContent = server.label || "live";
       }
 
       document.getElementById(rootId).innerHTML =
         metricBarHtml("CPU", server.cpu_percent || 0, "") +
         metricBarHtml("Memory", mem.percent || 0, memDetail) +
-        metricBarHtml("Disk", disk.percent || 0, diskDetail) +
-        containersHtml;
+        metricBarHtml("Disk", disk.percent || 0, diskDetail);
     }
 
     function renderContainersPanel(server) {
