@@ -1,55 +1,42 @@
-current_module: M5
-last_updated: '2026-03-23T11:35:00Z'
+project: ops-dashboard
+status: REVIEW
+current_module: M6
+last_updated: '2026-03-23T14:58:00Z'
 modules:
 - id: M1
   name: Backend API
-  notes: 'All 5 M1 issues implemented, reviewed by Masami (APPROVE_WITH_FIXES), and
-    all 6 review fixes applied in follow-up PR #12 (CI passed, merged). M1 is DONE.
-
-    '
-  prs_merged:
-  - merged_at: '2026-03-23T03:20:42Z'
-    number: 7
-    title: 'feat: GET /api/system — Mac + Hetzner metrics'
-  - merged_at: '2026-03-23T03:24:16Z'
-    number: 11
-    title: 'feat: integrate all M1 endpoints — kanban, agents, system, usage'
-  - merged_at: '2026-03-23T03:36:00Z'
-    number: 12
-    title: 'fix: apply Masami M1 review fixes (6 items)'
   status: DONE
 - id: M2
   name: Frontend — Kanban
-  notes: 'PR #14 merged, gh CLI + GH_TOKEN added to Dockerfile, deployed on Hetzner
-    :8090. /api/kanban → 200, 70 cards.'
-  pr: 14
   status: DONE
 - id: M3
   name: Frontend — Agent Monitor
-  notes: 'PR #17 merged. AO sessions + OpenClaw agent panels implemented.'
-  status: DONE
+  status: REVIEW
+  issues: [25, 28]
+  notes: 'ao sentinel + OPENCLAW_AGENTS_JSON injected into docker-compose. 19 agents will show after deploy. PR merged main (9702ae6, 97545b1).'
+  priority: P0
 - id: M4
   name: Frontend — System Metrics
-  notes: 'PR #19 merged. Mac + Hetzner progress bars with color thresholds.'
-  status: DONE
+  status: REVIEW
+  issues: [26]
+  notes: 'psutil relabeled as Hetzner Server. Docker containers via CLI. Mac panel only if MAC_SSH_HOST env set. PR merged main (9702ae6).'
+  priority: P0
 - id: M5
   name: Integration & Deploy
-  notes: 'Nav tabs, panel reorder, refresh-all, smoke tests, Dockerfile static fix.'
   status: DONE
-project: ops-dashboard
-status: DONE
-design_fixes:
-  issue: 22
-  pr: 23
-  branch: feat/issue-22
-  commit: c8ed016
-  status: MERGED
-  merged_at: '2026-03-23T11:35:00Z'
-  applied:
-  - viewport lock (height 100vh)
-  - 2x2 CSS grid layout
-  - Inter + JetBrains Mono typography
-  - independent panel scrolling
-  - kanban column dividers
-  - empty/error state styling
-  - kanban graceful fallback (empty list when gh unauthenticated)
+- id: M6
+  name: Bug fixes + Design
+  status: REVIEW
+  issues: [25, 26, 27, 28]
+  notes: 'M3+M4 fixes on main. OPENCLAW_AGENTS_JSON docker-compose injection added (97545b1). Awaiting Masami review then NAVI deploy.'
+  priority: P0
+pipeline_state: REVIEW
+pipeline_notes: 'All fixes on main (97545b1). Waiting for Masami review before NAVI deploy. 3 commits to deploy: 9702ae6, 97545b1.'
+pr:
+  number: null
+  branch: main
+  commit: 97545b1
+  description: 'fix: M3+M4+docker-compose — relabel metrics, ao sentinel, OPENCLAW_AGENTS_JSON injection'
+blockers:
+- 'Masami review pending'
+- 'Design: needs Mika spec after functionality verified post-deploy'
