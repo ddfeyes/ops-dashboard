@@ -466,13 +466,38 @@
       text-align: center;
     }
     .agent-info { flex: 1; min-width: 0; }
+    .agent-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .agent-status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-active  { background: #3fb950; box-shadow: 0 0 4px #3fb95066; }
+    .status-unknown { background: #30363d; }
     .agent-name {
       font-size: 13px;
       font-weight: 500;
       color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    }
+    .agent-status-label {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .agent-status-active { color: #3fb950; background: #0d2818; }
+    .agent-status-idle   { color: #8b949e; background: #21262d; }
+    .agent-last-seen {
+      font-size: 10px;
+      color: #484f58;
+      margin-left: auto;
     }
     .agent-model {
       font-size: 11px;
@@ -905,17 +930,25 @@
         </div>`;
     }
 
+    function agentStatusDot(status) {
+      if (status === "active") return `<span class="agent-status-dot status-active" title="Active"></span>`;
+      if (status === "idle")   return `<span class="agent-status-dot status-idle" title="Idle"></span>`;
+      return `<span class="agent-status-dot status-unknown" title="Unknown"></span>`;
+    }
+
     function agentCardHtml(a) {
       const emoji = a.emoji ? `<span class="agent-emoji">${escHtml(a.emoji)}</span>` : `<span class="agent-emoji">🤖</span>`;
       const name = escHtml(a.name || a.id || "—");
-      const model = a.model ? `<div class="agent-model">${escHtml(a.model)}</div>` : "";
-      const ws = a.workspace ? `<div class="agent-workspace">${escHtml(a.workspace)}</div>` : "";
+      const dot = agentStatusDot(a.status);
+      const lastSeen = a.last_seen ? `<span class="agent-last-seen">${relTime(a.last_seen)}</span>` : "";
+      const model = a.model ? `<div class="agent-model">${escHtml(a.model.replace("anthropic/",""))}</div>` : "";
+      const statusLabel = a.status ? `<span class="agent-status-label agent-status-${escHtml(a.status)}">${escHtml(a.status)}</span>` : "";
       return `
         <div class="agent-card">
           ${emoji}
           <div class="agent-info">
-            <div class="agent-name">${name}</div>
-            ${model}${ws}
+            <div class="agent-name-row">${dot}<span class="agent-name">${name}</span>${statusLabel}${lastSeen}</div>
+            ${model}
           </div>
         </div>`;
     }
