@@ -1,7 +1,7 @@
 project: ops-dashboard
 status: REVIEW
 current_module: M6
-last_updated: '2026-03-23T15:28:00Z'
+last_updated: '2026-03-23T17:35:00Z'
 modules:
 - id: M1
   name: Backend API
@@ -11,15 +11,15 @@ modules:
   status: DONE
 - id: M3
   name: Frontend — Agent Monitor
-  status: REVIEW
+  status: DONE
   issues: [25, 28, 29]
   notes: 'Agent cards now show status dot/badge/last_seen. 3-source live status fallback (env/sessions-dir/gateway). 19 agents from OPENCLAW_AGENTS_JSON.'
   priority: P0
 - id: M4
   name: Frontend — System Metrics
-  status: REVIEW
+  status: DONE
   issues: [26, 30]
-  notes: 'docker-compose.yml: /var/run/docker.sock:ro mounted — Containers panel will show live Hetzner containers after redeploy.'
+  notes: 'docker-compose.yml: /var/run/docker.sock:ro mounted — Containers panel shows live Hetzner containers.'
   priority: P0
 - id: M5
   name: Integration & Deploy
@@ -27,16 +27,17 @@ modules:
 - id: M6
   name: Bug fixes + Design
   status: REVIEW
-  issues: [25, 26, 27, 28, 29, 30]
-  notes: 'Commits 8617092 + b9f7564 on main. REVIEW_REQUEST sent to Masami 2026-03-23T15:28Z. DESIGN_VERIFY sent to Mika (queued).'
+  issues: [25, 26, 27, 28, 29, 30, 33, 34, 35, 36]
+  notes: |
+    Mika CONDITIONALLY APPROVED. 3 fixes applied in commit 49594e7.
+    Issues: #34 metric % in label row, #35 docker SDK containers, #36 Done badge scroll.
+    Pushed to main, sent to Masami for review.
   priority: P0
 pipeline_state: REVIEW
-pipeline_notes: 'REVIEW_REQUEST sent to Masami (commits 8617092+b9f7564): docker socket mount, agent live status, UI polish.'
+pipeline_notes: '49594e7 pushed to main. Sent to Masami for review (Mika feedback fixes).'
 pr:
   number: null
   branch: main
-  commit: b9f7564
-  description: 'fix: docker socket mount + agent live status (issues #29, #30)'
-blockers:
-- 'Waiting for Masami REVIEW on commits 8617092+b9f7564'
-- 'Design: DESIGN_VERIFY sent to Mika (queued)'
+  commit: 49594e7
+  description: 'fix: Mika feedback — metric % in label row, docker SDK for containers, Done badge scroll'
+blockers: []
