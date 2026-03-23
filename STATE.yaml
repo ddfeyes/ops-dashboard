@@ -1,0 +1,22 @@
+project: ops-dashboard
+status: WORKING
+current_module:
+  id: M1
+  name: "Backend API"
+  status: WORKING
+modules:
+  - id: M1
+    name: "Backend API"
+    status: WORKING
+  - id: M2
+    name: "Frontend — Kanban"
+    status: pending
+  - id: M3
+    name: "Frontend — Agent Monitor"
+    status: pending
+  - id: M4
+    name: "Frontend — System Metrics"
+    status: pending
+  - id: M5
+    name: "Integration & Deploy"
+    status: pending
