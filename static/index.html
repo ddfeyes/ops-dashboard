@@ -452,11 +452,102 @@
       opacity: 0.6;
     }
 
+    /* ── System Metrics ── */
+    .system-wrapper {
+      padding: 0 24px 40px;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .metric-row { margin-bottom: 12px; }
+    .metric-row:last-child { margin-bottom: 0; }
+    .metric-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    .metric-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 500;
+    }
+    .metric-pct {
+      font-size: 12px;
+      font-weight: 600;
+      font-family: "SFMono-Regular", Consolas, monospace;
+    }
+    .metric-bar-wrap {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .metric-bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .bar-green  { color: #3fb950; background: #3fb950; }
+    .bar-yellow { color: #e3b341; background: #e3b341; }
+    .bar-red    { color: #f85149; background: #f85149; }
+    .metric-detail {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+    }
+    .metric-divider { height: 1px; background: var(--border); margin: 12px 0; }
+    .containers-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .container-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text);
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .container-row:last-child { border-bottom: none; }
+    .container-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #3fb950;
+      flex-shrink: 0;
+    }
+    .container-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: "SFMono-Regular", Consolas, monospace;
+    }
+    .container-image {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 110px;
+    }
+
     @media (max-width: 768px) {
       .board { min-width: unset; flex-direction: column; }
       .column { max-width: 100%; }
       header { flex-wrap: wrap; gap: 8px; }
       .agents-grid { grid-template-columns: 1fr; }
+      .metrics-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -475,6 +566,30 @@
 
   <div class="board-wrapper">
     <div id="board-root"></div>
+  </div>
+
+  <div class="system-wrapper">
+    <div class="section-title">System Metrics</div>
+    <div class="metrics-grid">
+      <div class="agents-panel">
+        <div class="panel-header">
+          <span>Mac</span>
+          <span class="panel-count" id="mac-label">local</span>
+        </div>
+        <div class="panel-body" id="mac-root">
+          <div class="empty-panel">Loading…</div>
+        </div>
+      </div>
+      <div class="agents-panel">
+        <div class="panel-header">
+          <span>Hetzner</span>
+          <span class="panel-count" id="hetzner-label">—</span>
+        </div>
+        <div class="panel-body" id="hetzner-root">
+          <div class="empty-panel">Loading…</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="agents-wrapper">
@@ -756,14 +871,113 @@
       }
     }
 
+    // ── System Metrics ─────────────────────────────────────────────
+
+    function barClass(pct) {
+      if (pct >= 80) return "bar-red";
+      if (pct >= 60) return "bar-yellow";
+      return "bar-green";
+    }
+
+    function metricBarHtml(label, pct, detail) {
+      const cls = barClass(pct);
+      const w = Math.min(Math.max(pct, 0), 100).toFixed(1);
+      const detailHtml = detail ? `<div class="metric-detail">${escHtml(detail)}</div>` : "";
+      return `
+        <div class="metric-row">
+          <div class="metric-label-row">
+            <span class="metric-label">${escHtml(label)}</span>
+            <span class="metric-pct ${cls}">${pct.toFixed(1)}%</span>
+          </div>
+          <div class="metric-bar-wrap">
+            <div class="metric-bar ${cls}" style="width:${w}%"></div>
+          </div>
+          ${detailHtml}
+        </div>`;
+    }
+
+    function renderMac(mac) {
+      if (!mac) {
+        document.getElementById("mac-root").innerHTML = `<div class="empty-panel" style="color:#f85149">No data</div>`;
+        return;
+      }
+      const mem = mac.memory || {};
+      const disk = mac.disk || {};
+      const memDetail = (mem.used_gb != null && mem.total_gb != null)
+        ? `${mem.used_gb} GB / ${mem.total_gb} GB` : "";
+      const diskDetail = (disk.used_gb != null && disk.total_gb != null)
+        ? `${disk.used_gb} GB / ${disk.total_gb} GB` : "";
+
+      document.getElementById("mac-root").innerHTML =
+        metricBarHtml("CPU", mac.cpu_percent || 0, "") +
+        metricBarHtml("Memory", mem.percent || 0, memDetail) +
+        metricBarHtml("Disk", disk.percent || 0, diskDetail);
+    }
+
+    function renderHetzner(hetzner, error) {
+      if (error || !hetzner) {
+        document.getElementById("hetzner-root").innerHTML =
+          `<div class="empty-panel" style="color:#f85149">SSH error: ${escHtml(error || "no data")}</div>`;
+        document.getElementById("hetzner-label").textContent = "offline";
+        return;
+      }
+
+      const disk = hetzner.disk || {};
+      const diskPct = disk.use_percent ? parseFloat(disk.use_percent) : 0;
+      const diskDetail = (disk.used && disk.size) ? `${disk.used} / ${disk.size}` : "";
+      const containers = Array.isArray(hetzner.containers) ? hetzner.containers : [];
+      document.getElementById("hetzner-label").textContent = `${hetzner.container_count || 0} containers`;
+
+      let containersHtml = "";
+      if (containers.length) {
+        const rows = containers.slice(0, 8).map(c => {
+          const name = c.Names || c.Name || c.ID || "?";
+          const image = c.Image || "";
+          return `
+            <div class="container-row">
+              <span class="container-dot"></span>
+              <span class="container-name">${escHtml(name)}</span>
+              <span class="container-image">${escHtml(image)}</span>
+            </div>`;
+        }).join("");
+        containersHtml = `
+          <div class="metric-divider"></div>
+          <div class="containers-label">Docker (${containers.length})</div>
+          ${rows}`;
+      }
+
+      document.getElementById("hetzner-root").innerHTML =
+        metricBarHtml("CPU", hetzner.cpu_percent || 0, "") +
+        metricBarHtml("Memory", hetzner.memory_percent || 0, "") +
+        metricBarHtml("Disk", diskPct, diskDetail) +
+        containersHtml;
+    }
+
+    async function loadSystem() {
+      try {
+        const res = await fetch("/api/system");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        renderMac(data.mac);
+        renderHetzner(data.hetzner, data.hetzner_error);
+      } catch (err) {
+        document.getElementById("mac-root").innerHTML =
+          `<div class="empty-panel" style="color:#f85149">Error: ${escHtml(err.message)}</div>`;
+        document.getElementById("hetzner-root").innerHTML =
+          `<div class="empty-panel" style="color:#f85149">Error: ${escHtml(err.message)}</div>`;
+      }
+    }
+
     // Initial load
     document.getElementById("board-root").innerHTML =
       `<div class="loading-overlay"><div class="spinner"></div><span>Loading kanban…</span></div>`;
     loadKanban();
     loadAgents();
+    loadSystem();
 
     // Refresh agents every 30s in sync with kanban
     agentsRefreshTimer = setInterval(loadAgents, 30000);
+    setInterval(loadSystem, 30000);
   </script>
 </body>
 </html>
