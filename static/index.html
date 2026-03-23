@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ops Dashboard — Kanban</title>
+  <title>Ops Dashboard</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -276,10 +276,187 @@
     .filter-btn.active { border-color: var(--accent); color: var(--accent); background: #0d2245; }
     .filter-btn:hover:not(.active) { border-color: var(--muted); color: var(--text); }
 
+    /* ── Agent Monitor ── */
+    .agents-wrapper {
+      padding: 0 24px 40px;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      padding-top: 4px;
+      border-top: 1px solid var(--border);
+    }
+    .agents-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .agents-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #21262d;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-count {
+      background: rgba(255,255,255,0.08);
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .panel-body { padding: 10px; }
+
+    /* Session rows */
+    .session-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      margin-bottom: 6px;
+    }
+    .session-row:last-child { margin-bottom: 0; }
+    .session-status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .status-running  { background: #3fb950; box-shadow: 0 0 4px #3fb95066; }
+    .status-exited   { background: #f85149; }
+    .status-idle     { background: #8b949e; }
+    .status-unknown  { background: #30363d; }
+
+    .session-info { flex: 1; min-width: 0; }
+    .session-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .session-branch {
+      font-size: 11px;
+      color: var(--accent);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .session-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .session-age { font-size: 11px; color: var(--muted); }
+    .ci-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .ci-success  { color: #3fb950; background: #0d2818; }
+    .ci-failure  { color: #f85149; background: #2d0d0d; }
+    .ci-pending  { color: #e3b341; background: #2d1e00; }
+    .ci-unknown  { color: var(--muted); background: #21262d; }
+    .review-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #1e1240;
+      color: #a371f7;
+      font-weight: 500;
+    }
+    .pr-badge {
+      font-size: 10px;
+      color: #e3b341;
+      text-decoration: none;
+      border: 1px solid #7d4e0055;
+      border-radius: 4px;
+      padding: 1px 6px;
+      background: #2d1e0055;
+    }
+    .pr-badge:hover { border-color: #e3b341; }
+
+    /* OpenClaw agent cards */
+    .agent-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      margin-bottom: 6px;
+    }
+    .agent-card:last-child { margin-bottom: 0; }
+    .agent-emoji {
+      font-size: 20px;
+      flex-shrink: 0;
+      width: 28px;
+      text-align: center;
+    }
+    .agent-info { flex: 1; min-width: 0; }
+    .agent-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .agent-model {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      margin-top: 2px;
+    }
+    .agent-workspace {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .empty-panel {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 20px 0;
+      opacity: 0.6;
+    }
+
     @media (max-width: 768px) {
       .board { min-width: unset; flex-direction: column; }
       .column { max-width: 100%; }
       header { flex-wrap: wrap; gap: 8px; }
+      .agents-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -298,6 +475,30 @@
 
   <div class="board-wrapper">
     <div id="board-root"></div>
+  </div>
+
+  <div class="agents-wrapper">
+    <div class="section-title">Agent Monitor</div>
+    <div class="agents-grid">
+      <div class="agents-panel">
+        <div class="panel-header">
+          <span>AO Sessions</span>
+          <span class="panel-count" id="sessions-count">—</span>
+        </div>
+        <div class="panel-body" id="sessions-root">
+          <div class="empty-panel">Loading…</div>
+        </div>
+      </div>
+      <div class="agents-panel">
+        <div class="panel-header">
+          <span>OpenClaw Agents</span>
+          <span class="panel-count" id="agents-count">—</span>
+        </div>
+        <div class="panel-body" id="agents-root">
+          <div class="empty-panel">Loading…</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -470,10 +671,99 @@
       }
     }
 
+    // ── Agent Monitor ──────────────────────────────────────────────
+
+    function statusClass(status) {
+      if (!status) return "status-unknown";
+      const s = status.toLowerCase();
+      if (s === "running") return "status-running";
+      if (s === "exited") return "status-exited";
+      if (s === "idle")   return "status-idle";
+      return "status-unknown";
+    }
+
+    function ciClass(ci) {
+      if (!ci) return "ci-unknown";
+      const s = ci.toLowerCase();
+      if (s === "success") return "ci-success";
+      if (s === "failure" || s === "failed") return "ci-failure";
+      if (s === "pending" || s === "in_progress") return "ci-pending";
+      return "ci-unknown";
+    }
+
+    function sessionHtml(s) {
+      const dotCls = statusClass(s.status);
+      const nameLabel = escHtml(s.name || s.branch || "—");
+      const branchLabel = s.branch && s.branch !== s.name ? `<div class="session-branch">${escHtml(s.branch)}</div>` : "";
+      const age = s.age ? `<span class="session-age">${relTime(s.age)}</span>` : "";
+      const ci = s.ci ? `<span class="ci-badge ${ciClass(s.ci)}">CI: ${escHtml(s.ci)}</span>` : "";
+      const review = s.review ? `<span class="review-badge">${escHtml(s.review)}</span>` : "";
+      const pr = s.pr_url ? `<a class="pr-badge" href="${escHtml(s.pr_url)}" target="_blank" rel="noopener">PR #${s.pr || ""}</a>` : "";
+      return `
+        <div class="session-row">
+          <span class="session-status-dot ${dotCls}"></span>
+          <div class="session-info">
+            <div class="session-name">${nameLabel}</div>
+            ${branchLabel}
+            <div class="session-meta">${age}${ci}${review}${pr}</div>
+          </div>
+        </div>`;
+    }
+
+    function agentCardHtml(a) {
+      const emoji = a.emoji ? `<span class="agent-emoji">${escHtml(a.emoji)}</span>` : `<span class="agent-emoji">🤖</span>`;
+      const name = escHtml(a.name || a.id || "—");
+      const model = a.model ? `<div class="agent-model">${escHtml(a.model)}</div>` : "";
+      const ws = a.workspace ? `<div class="agent-workspace">${escHtml(a.workspace)}</div>` : "";
+      return `
+        <div class="agent-card">
+          ${emoji}
+          <div class="agent-info">
+            <div class="agent-name">${name}</div>
+            ${model}${ws}
+          </div>
+        </div>`;
+    }
+
+    function renderAgents(data) {
+      const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+      const agentList = Array.isArray(data.agents) ? data.agents : [];
+
+      document.getElementById("sessions-count").textContent = sessions.length;
+      document.getElementById("agents-count").textContent = agentList.length;
+
+      document.getElementById("sessions-root").innerHTML = sessions.length
+        ? sessions.map(sessionHtml).join("")
+        : `<div class="empty-panel">No active sessions</div>`;
+
+      document.getElementById("agents-root").innerHTML = agentList.length
+        ? agentList.map(agentCardHtml).join("")
+        : `<div class="empty-panel">No agents configured</div>`;
+    }
+
+    let agentsRefreshTimer = null;
+
+    async function loadAgents() {
+      try {
+        const res = await fetch("/api/agents");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        renderAgents(data);
+      } catch (err) {
+        document.getElementById("sessions-root").innerHTML =
+          `<div class="empty-panel" style="color:#f85149">Error: ${escHtml(err.message)}</div>`;
+        document.getElementById("agents-root").innerHTML = "";
+      }
+    }
+
     // Initial load
     document.getElementById("board-root").innerHTML =
       `<div class="loading-overlay"><div class="spinner"></div><span>Loading kanban…</span></div>`;
     loadKanban();
+    loadAgents();
+
+    // Refresh agents every 30s in sync with kanban
+    agentsRefreshTimer = setInterval(loadAgents, 30000);
   </script>
 </body>
 </html>
