@@ -1,7 +1,7 @@
 project: ops-dashboard
-status: DEPLOY
+status: REVIEW
 current_module: M6
-last_updated: '2026-03-23T15:06:00Z'
+last_updated: '2026-03-23T15:28:00Z'
 modules:
 - id: M1
   name: Backend API
@@ -11,32 +11,32 @@ modules:
   status: DONE
 - id: M3
   name: Frontend — Agent Monitor
-  status: DEPLOY
-  issues: [25, 28]
-  notes: 'ao sentinel + OPENCLAW_AGENTS_JSON injected into docker-compose. 19 agents will show after deploy. PR merged main (9702ae6, 97545b1). Masami LGTM 2026-03-23.'
+  status: REVIEW
+  issues: [25, 28, 29]
+  notes: 'Agent cards now show status dot/badge/last_seen. 3-source live status fallback (env/sessions-dir/gateway). 19 agents from OPENCLAW_AGENTS_JSON.'
   priority: P0
 - id: M4
   name: Frontend — System Metrics
-  status: DEPLOY
-  issues: [26]
-  notes: 'psutil relabeled as Hetzner Server. Docker containers via CLI. Mac panel only if MAC_SSH_HOST env set. PR merged main (9702ae6). Masami LGTM 2026-03-23.'
+  status: REVIEW
+  issues: [26, 30]
+  notes: 'docker-compose.yml: /var/run/docker.sock:ro mounted — Containers panel will show live Hetzner containers after redeploy.'
   priority: P0
 - id: M5
   name: Integration & Deploy
   status: DONE
 - id: M6
   name: Bug fixes + Design
-  status: DEPLOY
-  issues: [25, 26, 27, 28]
-  notes: 'M3+M4 fixes on main. OPENCLAW_AGENTS_JSON docker-compose injection added (97545b1). Masami LGTM on 9702ae6. DEPLOY_REQUEST sent to NAVI 2026-03-23T15:06Z.'
+  status: REVIEW
+  issues: [25, 26, 27, 28, 29, 30]
+  notes: 'Commits 8617092 + b9f7564 on main. REVIEW_REQUEST sent to Masami 2026-03-23T15:28Z. DESIGN_VERIFY sent to Mika (queued).'
   priority: P0
-pipeline_state: DEPLOY
-pipeline_notes: 'Masami LGTM 2026-03-23. DEPLOY_REQUEST sent to NAVI (commit 97545b1). Waiting for NAVI to deploy then verify live URL.'
+pipeline_state: REVIEW
+pipeline_notes: 'REVIEW_REQUEST sent to Masami (commits 8617092+b9f7564): docker socket mount, agent live status, UI polish.'
 pr:
   number: null
   branch: main
-  commit: 97545b1
-  description: 'fix: M3+M4+docker-compose — relabel metrics, ao sentinel, OPENCLAW_AGENTS_JSON injection'
+  commit: b9f7564
+  description: 'fix: docker socket mount + agent live status (issues #29, #30)'
 blockers:
-- 'NAVI deploying — waiting for confirmation'
-- 'Design: needs Mika spec after functionality verified post-deploy'
+- 'Waiting for Masami REVIEW on commits 8617092+b9f7564'
+- 'Design: DESIGN_VERIFY sent to Mika (queued)'
