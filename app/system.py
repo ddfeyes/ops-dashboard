@@ -211,6 +211,21 @@ def get_mac_metrics() -> dict[str, Any] | None:
 
 
 # ---------------------------------------------------------------------------
+# Local machine metrics — pre-computed by push-env.sh, injected via env var
+# ---------------------------------------------------------------------------
+
+def get_local_machine_metrics() -> dict[str, Any] | None:
+    """Return local machine metrics pushed via LOCAL_MACHINE_JSON env var."""
+    raw = os.getenv("LOCAL_MACHINE_JSON", "")
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------------------
 # Backward-compat shims used by main.py
 # ---------------------------------------------------------------------------
 
