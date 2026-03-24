@@ -93,6 +93,9 @@
       padding: 12px;
       min-height: 0;
     }
+    /* Row 3: crons (left) + usage (right) — both in the same row */
+    #crons    { grid-column: 1; grid-row: 3; }
+    #usage    { grid-column: 2; grid-row: 3; }
 
     .panel {
       background: var(--surface);
@@ -611,6 +614,47 @@
       color: #484f58;
     }
 
+    /* ── API Usage ── */
+    .usage-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6e7681;
+      padding: 6px 0 4px;
+      border-top: 1px solid var(--border);
+      margin-top: 10px;
+    }
+    .usage-section-label:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+    .usage-model-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+    .usage-model-table td {
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+      font-family: "JetBrains Mono", Consolas, monospace;
+    }
+    .usage-model-table tr:last-child td { border-bottom: none; }
+    .usage-model-table .um-name { color: var(--muted); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .usage-model-table .um-tokens { color: var(--text); text-align: right; font-weight: 600; }
+    .usage-token-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      padding: 2px 0;
+    }
+    .usage-token-label { color: var(--muted); }
+    .usage-token-value { font-family: "JetBrains Mono", Consolas, monospace; font-weight: 600; color: var(--text); }
+    .usage-reset-info {
+      font-size: 11px;
+      color: #6e7681;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
     /* ── Cron Jobs ── */
     .cron-row {
       display: flex;
@@ -755,9 +799,11 @@
       .app { height: auto; }
       .dashboard-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: 500px 500px 360px 360px 360px auto;
+        grid-template-rows: 500px 500px 360px 360px 360px 360px auto;
         height: auto;
       }
+      #crons  { grid-column: 1; grid-row: auto; }
+      #usage  { grid-column: 1; grid-row: auto; }
       .board { min-width: unset; flex-direction: column; }
       .column { max-width: 100%; }
       .column + .column { border-left: none; border-top: 1px solid var(--border); }
@@ -834,6 +880,16 @@
           <span class="panel-count" id="crons-count">—</span>
         </div>
         <div class="panel-body" id="crons-root">
+          <div class="empty-panel">Loading…</div>
+        </div>
+      </section>
+
+      <section class="panel" id="usage">
+        <div class="panel-header">
+          <span>API Usage</span>
+          <span class="panel-count mono" id="usage-label">↻ 30s</span>
+        </div>
+        <div class="panel-body" id="usage-root">
           <div class="empty-panel">Loading…</div>
         </div>
       </section>
@@ -1394,11 +1450,168 @@
       }
     }
 
+    // ── API Usage ─────────────────────────────────────────────────
+
+    function fmtTokens(n) {
+      if (n == null || isNaN(n)) return "0";
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+      if (n >= 1000)    return (n / 1000).toFixed(1) + "k";
+      return String(n);
+    }
+
+    function relWeekReset(isoStr) {
+      if (!isoStr) return "";
+      const diff = Math.max(0, new Date(isoStr).getTime() - Date.now());
+      const days  = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      if (days > 0) return `resets in ${days}d ${hours}h`;
+      if (hours > 0) return `resets in ${hours}h`;
+      return "resets soon";
+    }
+
+    function renderUsage(data) {
+      const rootEl  = document.getElementById("usage-root");
+      const labelEl = document.getElementById("usage-label");
+      if (!rootEl) return;
+
+      const sess      = data.current_session || {};
+      const weekly    = data.weekly_all || {};
+      const sessPct   = data.current_session_pct || 0;
+      const wkAllPct  = data.weekly_all_pct || 0;
+      const wkSonPct  = data.weekly_sonnet_pct || 0;
+      const limits    = data.limits || {};
+      const resetIso  = (data.reset_times || {}).weekly || "";
+      const byModel   = weekly.by_model || {};
+
+      // All-zeros detection
+      const allZero = !sess.total_tokens && !weekly.total_tokens;
+
+      if (allZero) {
+        rootEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div>No usage data available</div>
+            <div class="empty-state-detail">
+              Claude Code logs not found on this host.<br>
+              Mount ~/.claude/projects/ into the container to see live data.
+            </div>
+          </div>`;
+        if (labelEl) labelEl.textContent = "no data";
+        return;
+      }
+
+      if (labelEl) labelEl.textContent = "↻ 30s";
+
+      // Current session section
+      const sessTotal = sess.total_tokens || 0;
+      const sessCls   = barClass(sessPct);
+      const sessW     = Math.min(Math.max(sessPct, 0), 100).toFixed(1);
+
+      // Weekly totals section
+      const wkTotal   = weekly.total_tokens || 0;
+      const wkSonnet  = weekly.sonnet_tokens || 0;
+      const wkAllCls  = barClass(wkAllPct);
+      const wkAllW    = Math.min(Math.max(wkAllPct, 0), 100).toFixed(1);
+      const wkSonCls  = barClass(wkSonPct);
+      const wkSonW    = Math.min(Math.max(wkSonPct, 0), 100).toFixed(1);
+
+      // Model breakdown rows (sort by total desc)
+      const modelRows = Object.entries(byModel)
+        .map(([m, c]) => ({ name: m, total: (c.input_tokens || 0) + (c.output_tokens || 0) }))
+        .sort((a, b) => b.total - a.total);
+
+      const modelHtml = modelRows.length
+        ? `<table class="usage-model-table">
+            ${modelRows.map(r => `
+              <tr>
+                <td class="um-name" title="${escHtml(r.name)}">${escHtml(r.name.replace("claude-","").replace("anthropic/",""))}</td>
+                <td class="um-tokens">${fmtTokens(r.total)}</td>
+              </tr>`).join("")}
+           </table>`
+        : `<div style="font-size:11px;color:var(--muted);padding:4px 0">No model data</div>`;
+
+      rootEl.innerHTML = `
+        <div class="usage-section-label">Current Session</div>
+        <div class="usage-token-row">
+          <span class="usage-token-label">Input</span>
+          <span class="usage-token-value">${fmtTokens(sess.input_tokens)}</span>
+        </div>
+        <div class="usage-token-row">
+          <span class="usage-token-label">Output</span>
+          <span class="usage-token-value">${fmtTokens(sess.output_tokens)}</span>
+        </div>
+        <div class="usage-token-row">
+          <span class="usage-token-label">Cache</span>
+          <span class="usage-token-value">${fmtTokens((sess.cache_creation_tokens||0) + (sess.cache_read_tokens||0))}</span>
+        </div>
+        <div class="metric-row" style="margin-top:6px">
+          <div class="metric-label-row">
+            <span class="metric-label">Session limit</span>
+            <span class="metric-value ${sessCls}">${sessPct.toFixed(1)}%</span>
+          </div>
+          <div class="metric-bar-outer">
+            <div class="metric-bar-wrap">
+              <div class="metric-bar ${sessCls}" style="width:${sessW}%"></div>
+            </div>
+          </div>
+          <div class="metric-detail">${fmtTokens(sessTotal)} / ${fmtTokens(limits.session_token_limit)}</div>
+        </div>
+
+        <div class="usage-section-label" style="margin-top:10px">Weekly Totals</div>
+        <div class="metric-row">
+          <div class="metric-label-row">
+            <span class="metric-label">All tokens</span>
+            <span class="metric-value ${wkAllCls}">${wkAllPct.toFixed(1)}%</span>
+          </div>
+          <div class="metric-bar-outer">
+            <div class="metric-bar-wrap">
+              <div class="metric-bar ${wkAllCls}" style="width:${wkAllW}%"></div>
+            </div>
+          </div>
+          <div class="metric-detail">${fmtTokens(wkTotal)} / ${fmtTokens(limits.weekly_all_token_limit)}</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-label-row">
+            <span class="metric-label">Sonnet tokens</span>
+            <span class="metric-value ${wkSonCls}">${wkSonPct.toFixed(1)}%</span>
+          </div>
+          <div class="metric-bar-outer">
+            <div class="metric-bar-wrap">
+              <div class="metric-bar ${wkSonCls}" style="width:${wkSonW}%"></div>
+            </div>
+          </div>
+          <div class="metric-detail">${fmtTokens(wkSonnet)} / ${fmtTokens(limits.weekly_sonnet_token_limit)}</div>
+        </div>
+        ${resetIso ? `<div class="usage-reset-info">⏱ ${relWeekReset(resetIso)}</div>` : ""}
+
+        <div class="usage-section-label" style="margin-top:10px">Model Breakdown (week)</div>
+        ${modelHtml}
+      `;
+    }
+
+    async function loadUsage() {
+      try {
+        const res = await fetch("/api/usage");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        renderUsage(data);
+      } catch (err) {
+        const rootEl = document.getElementById("usage-root");
+        if (rootEl) rootEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div>Usage data unavailable</div>
+            <div class="empty-state-detail">${escHtml(err.message)}</div>
+          </div>`;
+      }
+    }
+
     function loadAll() {
       loadKanban();
       loadAgents();
       loadSystem();
       loadCrons();
+      loadUsage();
     }
 
     // Initial load
@@ -1410,6 +1623,7 @@
     agentsRefreshTimer = setInterval(loadAgents, 30000);
     setInterval(loadSystem, 30000);
     setInterval(loadCrons, 60000);
+    setInterval(loadUsage, 30000);
   </script>
 </body>
 </html>
