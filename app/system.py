@@ -9,6 +9,9 @@ import socket
 import subprocess
 from typing import Any
 
+import threading
+import time
+
 import psutil
 
 # The dashboard runs ON the Hetzner server.
@@ -18,13 +21,32 @@ import psutil
 MAC_SSH_HOST = os.getenv("MAC_SSH_HOST", "")  # e.g. "user@192.168.x.x"
 MAC_SSH_PORT = int(os.getenv("MAC_SSH_PORT", "22"))
 
+_metrics_cache: dict = {}
+_metrics_cache_time: float = 0.0
+_metrics_cache_lock = threading.Lock()
+_METRICS_TTL: float = 10.0
+
 
 # ---------------------------------------------------------------------------
 # Local server metrics (runs wherever the container is — Hetzner)
 # ---------------------------------------------------------------------------
 
 def get_server_metrics() -> dict[str, Any]:
-    """Return metrics for the local machine (the Hetzner server)."""
+    """Return server metrics, cached for up to 10 seconds to avoid concurrent Docker SDK races."""
+    global _metrics_cache, _metrics_cache_time
+    now = time.monotonic()
+    with _metrics_cache_lock:
+        if _metrics_cache and (now - _metrics_cache_time) < _METRICS_TTL:
+            return _metrics_cache
+    result = _get_server_metrics_fresh()
+    with _metrics_cache_lock:
+        _metrics_cache = result
+        _metrics_cache_time = time.monotonic()
+    return result
+
+
+def _get_server_metrics_fresh() -> dict[str, Any]:
+    """Return fresh metrics for the local machine (the Hetzner server)."""
     cpu = psutil.cpu_percent(interval=0.5)
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage("/")
