@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time as _time_module
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
@@ -16,6 +18,8 @@ from app.agents import get_ao_sessions, get_openclaw_agents
 from app.kanban import fetch_kanban_cards
 from app.system import get_hetzner_metrics, get_mac_metrics, get_server_metrics
 from app.usage import get_usage
+
+_START_TIME = _time_module.time()
 
 app = FastAPI(title="Ops Dashboard", version="0.1.0")
 
@@ -49,7 +53,47 @@ async def root() -> FileResponse:
 
 @app.get("/api/health")
 async def health() -> dict:
-    return {"status": "ok"}
+    uptime = int(_time_module.time() - _START_TIME)
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+    # Quick non-blocking checks
+    checks: dict = {}
+    overall = "ok"
+
+    # Check agents
+    try:
+        loop = asyncio.get_running_loop()
+        agent_data = await loop.run_in_executor(_executor, get_openclaw_agents)
+        checks["agents"] = {"status": "ok", "count": len(agent_data)}
+    except Exception as e:
+        checks["agents"] = {"status": "error", "error": str(e)}
+        overall = "degraded"
+
+    # Check system/docker
+    try:
+        loop = asyncio.get_running_loop()
+        sys_data = await loop.run_in_executor(_executor, get_server_metrics)
+        docker_ok = sys_data.get("docker_available", False)
+        container_count = sys_data.get("container_count", 0)
+        checks["docker"] = {
+            "status": "ok" if docker_ok else "error",
+            "containers": container_count,
+        }
+        checks["hetzner"] = {"status": "ok"}
+        if not docker_ok:
+            overall = "degraded"
+    except Exception as e:
+        checks["docker"] = {"status": "error", "error": str(e)}
+        checks["hetzner"] = {"status": "error", "error": str(e)}
+        overall = "degraded"
+
+    return {
+        "status": overall,
+        "version": app.version,
+        "uptime_seconds": uptime,
+        "timestamp": now,
+        "checks": checks,
+    }
 
 
 @app.get("/api/kanban")
