@@ -11,6 +11,7 @@ ENV_FILE="/tmp/ops-dashboard-push.env"
 echo "==> Computing local machine metrics..."
 LOCAL_MACHINE_JSON=$(python3 - << 'PYEOF'
 import json, time, os
+from datetime import datetime, timezone
 
 with open('/proc/stat') as f:
     cpu_line = f.readline()
@@ -69,7 +70,8 @@ result = {
     'load_avg': {'load1': load1, 'load5': load5, 'load15': load15, 'cpu_count': cpu_count},
     'uptime_seconds': uptime_sec,
     'hostname': hostname,
-    'label': 'Local Machine'
+    'label': 'Local Machine',
+    'computed_at': datetime.now(timezone.utc).isoformat()
 }
 print(json.dumps(result, separators=(',', ':')))
 PYEOF

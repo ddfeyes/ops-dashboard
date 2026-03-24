@@ -1184,6 +1184,24 @@
         document.getElementById(labelId).textContent = server.hostname || "live";
       }
 
+      // Freshness badge — only for local-root (push-env data can be stale)
+      if (rootId === "local-root" && labelId) {
+        const ageMs = server.computed_at ? Date.now() - new Date(server.computed_at).getTime() : 0;
+        const existingBadge = document.getElementById("local-freshness-badge");
+        if (existingBadge) existingBadge.remove();
+        if (ageMs > 0) {
+          const ageColor = ageMs > 1800000 ? "#f85149" : ageMs > 300000 ? "#e3b341" : "#8b949e";
+          const badge = document.createElement("div");
+          badge.id = "local-freshness-badge";
+          badge.style.cssText = "font-size:10px;color:" + ageColor + ";margin-top:2px;";
+          badge.textContent = "⏱ " + Math.round(ageMs / 60000) + "m ago";
+          const labelEl = document.getElementById(labelId);
+          if (labelEl && labelEl.parentNode) {
+            labelEl.parentNode.insertBefore(badge, labelEl.nextSibling);
+          }
+        }
+      }
+
       // Build compact 2×2 grid of secondary metrics
       const _compactItems = [];
 
