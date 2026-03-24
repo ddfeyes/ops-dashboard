@@ -142,6 +142,8 @@
       height: 100%;
       overflow-x: auto;
       scroll-behavior: smooth;
+      display: flex;
+      flex-direction: column;
     }
     .board-wrapper::-webkit-scrollbar { height: 4px; }
     .board-wrapper::-webkit-scrollbar-track { background: transparent; }
@@ -178,6 +180,8 @@
       min-width: 900px;
       align-items: stretch;
       height: 100%;
+      flex: 1;
+      min-height: 0;
     }
 
     /* ── Column ── */
@@ -188,6 +192,8 @@
       border-radius: 0;
       border: none;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .column + .column {
       border-left: 1px solid var(--border);
@@ -209,7 +215,20 @@
       font-size: 11px;
       font-weight: 500;
     }
-    .col-cards { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
+    .col-cards {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #30363d transparent;
+    }
+    .col-cards::-webkit-scrollbar { width: 3px; }
+    .col-cards::-webkit-scrollbar-track { background: transparent; }
+    .col-cards::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
 
     /* Column themes — light tint + left border accent, no heavy fills */
     .col-backlog  { background: var(--col-backlog);  border-left: 2px solid var(--col-backlog-accent) !important; }
