@@ -479,6 +479,16 @@
     .pr-badge:hover { border-color: #e3b341; }
 
     /* OpenClaw agent cards */
+    #agents-root {
+      overflow-y: auto;
+      max-height: 380px;
+      scrollbar-width: thin;
+      scrollbar-color: #30363d transparent;
+    }
+    #agents-root::-webkit-scrollbar { width: 3px; }
+    #agents-root::-webkit-scrollbar-track { background: transparent; }
+    #agents-root::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+
     .agent-card {
       display: flex;
       align-items: center;
