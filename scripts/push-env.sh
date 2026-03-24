@@ -2,9 +2,21 @@
 # push-env.sh — Compute and push ops-dashboard.env to Hetzner
 set -euo pipefail
 
-HETZNER_HOST="user3@94.130.65.86"
-HETZNER_PORT="2203"
-HETZNER_PASS="***REDACTED***"
+# Load Hetzner credentials from env or local creds file
+_CREDS_FILE="$(dirname "$0")/../.hetzner-creds"
+if [ -f "$_CREDS_FILE" ]; then
+  # shellcheck source=/dev/null
+  source "$_CREDS_FILE"
+fi
+
+HETZNER_HOST="${HETZNER_HOST:-user3@94.130.65.86}"
+HETZNER_PORT="${HETZNER_PORT:-2203}"
+HETZNER_PASS="${HETZNER_PASS:-}"
+
+if [ -z "$HETZNER_PASS" ]; then
+  echo "ERROR: HETZNER_PASS not set. Create .hetzner-creds or export HETZNER_PASS." >&2
+  exit 1
+fi
 REMOTE_DIR="/home/user3/ops-dashboard"
 ENV_FILE="/tmp/ops-dashboard-push.env"
 
