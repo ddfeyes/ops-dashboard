@@ -776,6 +776,7 @@
         <div id="status" class="mono">Loading…</div>
       </div>
     </header>
+    <div id="alert-bar" style="display:none;background:#3d1515;border-bottom:1px solid #f85149;padding:5px 16px;font-size:11px;color:#f85149;font-family:'JetBrains Mono',Consolas,monospace;font-weight:600;letter-spacing:.4px;flex-shrink:0"></div>
 
     <main class="dashboard-grid">
       <section class="panel" id="kanban">
@@ -997,7 +998,7 @@
           const hasScroll = wrapper.scrollWidth > wrapper.clientWidth + 8;
           hint.className = hasScroll ? "scroll-hint visible" : "scroll-hint";
         }
-      }, 50);
+      }, 500);
     }
 
     async function loadKanban() {
@@ -1283,6 +1284,27 @@
       rootEl.innerHTML = `<div class="containers-label">Running containers</div>${rows}`;
     }
 
+    function checkAlerts(server) {
+      const alerts = [];
+      const temps = server.temperatures || {};
+      const tempC = temps.Tctl || temps.Composite || null;
+      if (tempC != null && tempC > 85) alerts.push("🌡 TEMP " + tempC.toFixed(1) + "°C CRITICAL");
+      const load = server.load_avg || {};
+      if (load.load1 != null && load.cpu_count && load.load1 >= load.cpu_count) {
+        alerts.push("⚡ LOAD " + load.load1 + " / " + load.cpu_count + " CORES");
+      }
+      const disk = server.disk || {};
+      if (disk.percent != null && disk.percent > 90) alerts.push("💾 DISK " + disk.percent.toFixed(0) + "% FULL");
+      const bar = document.getElementById("alert-bar");
+      if (!bar) return;
+      if (alerts.length) {
+        bar.textContent = "⚠ HETZNER: " + alerts.join(" · ");
+        bar.style.display = "block";
+      } else {
+        bar.style.display = "none";
+      }
+    }
+
     async function loadSystem() {
       try {
         const res = await fetch("/api/system");
@@ -1296,6 +1318,7 @@
           document.getElementById("mac-label").textContent = "error";
         } else {
           renderServerMetrics(server, "mac-root", "mac-label");
+          checkAlerts(server);
         }
         // Local machine metrics (pushed via push-env.sh from hui20metrov-MP200)
         const local = data.local;
