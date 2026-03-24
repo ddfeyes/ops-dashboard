@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.agents import get_ao_sessions, get_openclaw_agents
+from app.crons import get_crons
 from app.kanban import fetch_kanban_cards
 from app.system import get_hetzner_metrics, get_mac_metrics, get_server_metrics
 from app.usage import get_usage
@@ -164,3 +165,10 @@ async def usage() -> dict[str, Any]:
     """Return Anthropic API usage from local Claude Code session logs."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(_executor, get_usage)
+
+
+@app.get("/api/crons")
+async def crons() -> list[dict[str, Any]]:
+    """Return OpenClaw cron job status."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(_executor, get_crons)
