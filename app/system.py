@@ -20,6 +20,7 @@ import psutil
 
 MAC_SSH_HOST = os.getenv("MAC_SSH_HOST", "")  # e.g. "user@192.168.x.x"
 MAC_SSH_PORT = int(os.getenv("MAC_SSH_PORT", "22"))
+SERVER_LABEL = os.getenv("SERVER_LABEL", "")
 
 _metrics_cache: dict = {}
 _metrics_cache_time: float = 0.0
@@ -50,6 +51,7 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
     cpu = psutil.cpu_percent(interval=0.5)
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage("/")
+    net = psutil.net_io_counters()
 
     temps: dict[str, float] = {}
     try:
@@ -82,7 +84,11 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
         "container_count": len(containers),
         "docker_available": docker_available,
         "label": "Hetzner Server",
-        "hostname": _get_hostname(),
+        "hostname": SERVER_LABEL or _get_hostname(),
+        "network": {
+            "bytes_sent": net.bytes_sent,
+            "bytes_recv": net.bytes_recv,
+        },
     }
 
 
