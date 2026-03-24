@@ -1,7 +1,7 @@
 project: ops-dashboard
-status: REVIEW
-current_module: M6
-last_updated: '2026-03-23T17:35:00Z'
+status: ACTIVE
+current_module: IMPROVEMENT
+last_updated: '2026-03-24T14:34:00Z'
 modules:
 - id: M1
   name: Backend API
@@ -12,34 +12,33 @@ modules:
 - id: M3
   name: Frontend — Agent Monitor
   status: DONE
-  issues: [25, 28, 29]
-  notes: 'Agent cards now show status dot/badge/last_seen. 3-source live status fallback (env/sessions-dir/gateway). 19 agents from OPENCLAW_AGENTS_JSON.'
-  priority: P0
 - id: M4
   name: Frontend — System Metrics
   status: DONE
-  issues: [26, 30]
-  notes: 'docker-compose.yml: /var/run/docker.sock:ro mounted — Containers panel shows live Hetzner containers.'
-  priority: P0
 - id: M5
   name: Integration & Deploy
   status: DONE
 - id: M6
   name: Bug fixes + Design
-  status: REVIEW
-  issues: [25, 26, 27, 28, 29, 30, 33, 34, 35, 36]
-  notes: |
-    Masami PR#31 APPROVE_WITH_FIXES — both fixes already applied in main:
-    MAJOR: metric-value moved outside metric-bar-wrap (commit c962d94 + 6f7f51d) — value is visible.
-    NIT: renderServerMetrics no longer renders Docker in mac panel (commit 6f7f51d) — separate containers panel.
-    Self-tested locally: metrics show 0.8%/65.0%/4.7% values clearly visible. Docker panel shows proper empty state.
-    Re-sent to Masami for review of current main (7d8374f).
-  priority: P0
-pipeline_state: REVIEW
-pipeline_notes: 'Masami fixes applied. Re-review sent on main@7d8374f.'
+  status: DONE
+pipeline_state: DEPLOYED
+pipeline_notes: 'PR#99 merged — CSS tokenization: replaced hardcoded #21262d with --surface-header/--surface-raised vars'
 pr:
-  number: null
+  number: 99
   branch: main
-  commit: 7d8374f
-  description: 'fix: metric-value visibility (major) + no docker in mac panel (nit) — Masami PR#31 fixes'
+  commit: merged
+  description: 'fix(#94): replace hardcoded #21262d with --surface-header/--surface-raised CSS tokens'
+last_verified: '2026-03-24T14:38:51Z'
+live_check:
+  health: ok
+  agents: '10/10'
+  hetzner: 'docker 26 containers running'
+  design_tokens: 'all #21262d replaced with CSS vars'
+cron:
+  push_env: '*/30 * * * * — refreshes agents+crons+local metrics'
 blockers: []
+open_issues:
+  - 27   # design pass — Mika redesign
+  - 92   # grid rows min-heights (already fixed in CSS — close next cycle)
+  - 95   # compact metrics grid inline style → CSS classes
+  - 96   # alert-bar CSS refactor + top border
