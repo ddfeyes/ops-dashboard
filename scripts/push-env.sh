@@ -35,7 +35,7 @@ PYEOF
 )
 
 echo "==> Getting cron jobs..."
-CRONS_JSON=$(openclaw cron list --json 2>/dev/null || echo '[]')
+CRONS_JSON=$(openclaw cron list --json 2>/dev/null | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin), separators=(",",":" )))' 2>/dev/null || echo '[]')
 
 echo "==> Getting GH_TOKEN..."
 GH_TOKEN=$(gh auth token)
@@ -49,8 +49,8 @@ cat > "$ENV_FILE" << EOF
 ${AGENTS_JSON}
 OPENCLAW_AGENTS_STATUS_JSON=${AGENTS_STATUS}
 GH_TOKEN=${GH_TOKEN}
-OPENCLAW_GATEWAY_CRONS_JSON=${CRONS_JSON}
 EOF
+printf 'OPENCLAW_GATEWAY_CRONS_JSON=%s\n' "$CRONS_JSON" >> "$ENV_FILE"
 
 echo "==> Pushing to Hetzner..."
 sshpass -p "$HETZNER_PASS" scp -P "$HETZNER_PORT" -o StrictHostKeyChecking=no \
