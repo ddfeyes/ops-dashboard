@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import subprocess
@@ -42,8 +43,22 @@ _AGENTS_STATUS_JSON = os.getenv("OPENCLAW_AGENTS_STATUS_JSON", "")
 # e.g. /openclaw-sessions → maps to ~/.openclaw/agents on host
 _OPENCLAW_SESSIONS_DIR = os.getenv("OPENCLAW_SESSIONS_DIR", "")
 
+# Optional: base directory where agent workspaces are mounted
+# e.g. /agents → agent lain at /agents/lain, masami at /agents/masami, etc.
+# The code will scan for most-recently-modified file in each agent workspace.
+_OPENCLAW_AGENTS_DIR = os.getenv("OPENCLAW_AGENTS_DIR", "")
+
+# Workspace path remapping: rewrite workspace paths from one prefix to another.
+# e.g. OPENCLAW_WORKSPACE_PREFIX_FROM=/Users/aivan OPENCLAW_WORKSPACE_PREFIX_TO=/agents
+_WORKSPACE_PREFIX_FROM = os.getenv("OPENCLAW_WORKSPACE_PREFIX_FROM", "")
+_WORKSPACE_PREFIX_TO = os.getenv("OPENCLAW_WORKSPACE_PREFIX_TO", "")
+
 # Active threshold: sessions active within this many seconds are "active"
 _ACTIVE_THRESHOLD_SECS = 300  # 5 minutes
+
+# Offline threshold: workspaces not modified within this many seconds are "offline"
+# (beyond idle — considered very stale)
+_OFFLINE_THRESHOLD_SECS = 3 * 3600  # 3 hours
 
 
 def _find_openclaw_config() -> Path | None:
@@ -51,6 +66,81 @@ def _find_openclaw_config() -> Path | None:
         if p.exists():
             return p
     return None
+
+
+def _secs_to_iso(secs: float) -> str | None:
+    try:
+        return datetime.datetime.fromtimestamp(secs, tz=datetime.timezone.utc).isoformat()
+    except Exception:
+        return None
+
+
+def _ms_to_iso(ms: int) -> str | None:
+    if not ms:
+        return None
+    try:
+        return datetime.datetime.fromtimestamp(ms / 1000, tz=datetime.timezone.utc).isoformat()
+    except Exception:
+        return None
+
+
+def _remap_workspace(workspace: str | None) -> str | None:
+    """Apply workspace path prefix remapping if configured."""
+    if not workspace:
+        return workspace
+    if _WORKSPACE_PREFIX_FROM and _WORKSPACE_PREFIX_TO:
+        if workspace.startswith(_WORKSPACE_PREFIX_FROM):
+            return _WORKSPACE_PREFIX_TO + workspace[len(_WORKSPACE_PREFIX_FROM):]
+    return workspace
+
+
+def _get_workspace_last_seen(workspace: str | None) -> dict | None:
+    """Scan an agent's workspace directory to determine last activity time via file mtime."""
+    if not workspace:
+        return None
+    p = Path(workspace)
+    if not p.exists() or not p.is_dir():
+        return None
+    try:
+        now = time.time()
+        best_mtime: float | None = None
+        # Check key indicator files first (memory, STATE.yaml, inbox, logs)
+        priority_globs = ["memory/*.md", "memory/*.json", "STATE.yaml", "inbox/*.md",
+                          "inbox/*.json", "logs/*.log", "HEARTBEAT.md", "*.md"]
+        for pattern in priority_globs:
+            for f in p.glob(pattern):
+                try:
+                    mt = f.stat().st_mtime
+                    if best_mtime is None or mt > best_mtime:
+                        best_mtime = mt
+                except OSError:
+                    continue
+        # Fallback: any file in root level
+        if best_mtime is None:
+            for f in p.iterdir():
+                if f.is_file():
+                    try:
+                        mt = f.stat().st_mtime
+                        if best_mtime is None or mt > best_mtime:
+                            best_mtime = mt
+                    except OSError:
+                        continue
+        if best_mtime is None:
+            return None
+        age_secs = now - best_mtime
+        if age_secs < _ACTIVE_THRESHOLD_SECS:
+            status = "active"
+        elif age_secs < _OFFLINE_THRESHOLD_SECS:
+            status = "idle"
+        else:
+            status = "offline"
+        return {
+            "status": status,
+            "last_seen_iso": _secs_to_iso(best_mtime),
+            "_last_ms": int(best_mtime * 1000),
+        }
+    except Exception:
+        return None
 
 
 def _fetch_gateway_sessions() -> dict[str, dict]:
@@ -140,16 +230,6 @@ def _fetch_gateway_sessions() -> dict[str, dict]:
         return {}
 
 
-def _ms_to_iso(ms: int) -> str | None:
-    if not ms:
-        return None
-    try:
-        import datetime
-        return datetime.datetime.fromtimestamp(ms / 1000, tz=datetime.timezone.utc).isoformat()
-    except Exception:
-        return None
-
-
 def get_ao_sessions() -> list[dict[str, Any]]:
     """Run `ao status --json` and return the parsed session list.
     
@@ -205,7 +285,9 @@ def get_openclaw_agents() -> list[dict[str, Any]]:
     """Read OpenClaw agent configs and return the agent list with live status.
     
     Falls back to OPENCLAW_AGENTS_JSON env var if config file not found.
-    Enriches agents with live status from OpenClaw gateway if reachable.
+    Enriches agents with live status from:
+    1. OpenClaw gateway / sessions dir (if reachable)
+    2. Agent workspace file mtime scan (via OPENCLAW_AGENTS_DIR mount)
     """
     # Try env var override first
     base_agents: list[dict[str, Any]] = []
@@ -247,14 +329,44 @@ def get_openclaw_agents() -> list[dict[str, Any]]:
     for agent in base_agents:
         agent_id = agent.get("id") or ""
         live = live_sessions.get(agent_id, {})
+
+        # Determine workspace path (remap if needed)
+        workspace = agent.get("workspace")
+        mapped_workspace = _remap_workspace(workspace)
+
+        # If no live data from gateway, try workspace mtime scan
+        # Also try OPENCLAW_AGENTS_DIR/<agent_id> if set
+        if not live:
+            # Try mounted agents dir first
+            if _OPENCLAW_AGENTS_DIR:
+                agents_base = Path(_OPENCLAW_AGENTS_DIR).resolve()
+                # Sanitize: strip path separators to prevent traversal
+                safe_id = agent_id.replace("/", "").replace("..", "").strip()
+                agent_dir = (agents_base / safe_id).resolve()
+                # Ensure resolved path stays inside the agents base
+                if not str(agent_dir).startswith(str(agents_base)):
+                    agent_dir = agents_base  # fallback to non-existent placeholder
+                if not agent_dir.exists():
+                    # try fragments subdir
+                    frag_id = safe_id.replace("fragment-", "")
+                    agent_dir = (agents_base / "fragments" / frag_id).resolve()
+                workspace_data = _get_workspace_last_seen(str(agent_dir) if agent_dir.exists() else None)
+                if workspace_data:
+                    live = workspace_data
+            # Fallback to remapped workspace path
+            if not live and mapped_workspace:
+                workspace_data = _get_workspace_last_seen(mapped_workspace)
+                if workspace_data:
+                    live = workspace_data
+
         agents.append(
             {
                 "id": agent_id,
                 "name": agent.get("name") or agent_id,
                 "model": agent.get("model"),
-                "workspace": agent.get("workspace"),
+                "workspace": workspace,
                 "emoji": agent.get("emoji"),
-                "status": live.get("status"),        # "active" | "idle" | None
+                "status": live.get("status"),        # "active" | "idle" | "offline" | None
                 "last_seen": live.get("last_seen_iso") or live.get("last_seen"),  # ISO timestamp or None
             }
         )
