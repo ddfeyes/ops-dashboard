@@ -947,7 +947,7 @@
         byCol[col].push(card);
       });
 
-      const html = COLUMNS.map(col => {
+      const html = COLUMNS.filter(col => col.key === "backlog" || byCol[col.key].length > 0).map(col => {
         const colCards = byCol[col.key];
         const cardsHtml = colCards.length
           ? colCards.map(cardHtml).join("")
