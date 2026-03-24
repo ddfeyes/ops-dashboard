@@ -776,11 +776,6 @@
         <div class="panel-header"><span>Agent Monitor</span></div>
         <div class="panel-body">
           <div class="agent-section-header">
-            <span>AO Sessions</span>
-            <span class="panel-count" id="sessions-count">—</span>
-          </div>
-          <div id="sessions-root"><div class="empty-panel">Loading…</div></div>
-          <div class="agent-section-header">
             <span>OpenClaw Agents</span>
             <span class="panel-count" id="agents-count">—</span>
           </div>
@@ -1077,24 +1072,9 @@
     }
 
     function renderAgents(data) {
-      const rawSessions = Array.isArray(data.sessions) ? data.sessions : [];
       const agentList = Array.isArray(data.agents) ? data.agents : [];
 
-      // Check for sentinel error from backend (ao not installed etc.)
-      const aoError = rawSessions.find(s => s._error);
-      const sessions = rawSessions.filter(s => !s._error);
-
-      document.getElementById("sessions-count").textContent = aoError ? "n/a" : sessions.length;
       document.getElementById("agents-count").textContent = agentList.length;
-
-      if (aoError) {
-        document.getElementById("sessions-root").innerHTML =
-          `<div class="empty-state"><div class="empty-state-icon">⚠</div><div>AO not available</div><div class="empty-state-detail">${escHtml(aoError._message || aoError._error)}</div></div>`;
-      } else {
-        document.getElementById("sessions-root").innerHTML = sessions.length
-          ? sessions.map(sessionHtml).join("")
-          : `<div class="empty-state"><div class="empty-state-icon">IDLE</div><div>No active sessions</div><div class="empty-state-detail">Waiting for AO session activity</div></div>`;
-      }
 
       document.getElementById("agents-root").innerHTML = agentList.length
         ? agentList.map(agentCardHtml).join("")
@@ -1110,8 +1090,6 @@
         const data = await res.json();
         renderAgents(data);
       } catch (err) {
-        document.getElementById("sessions-root").innerHTML =
-          `<div class="status-error"><div class="status-error-icon">!</div><div><div>Agent monitor unavailable</div><div class="status-error-detail">${escHtml(err.message)}</div></div></div>`;
         document.getElementById("agents-root").innerHTML =
           `<div class="empty-state"><div class="empty-state-icon">WAIT</div><div>Awaiting agent data</div></div>`;
       }
