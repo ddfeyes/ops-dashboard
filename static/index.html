@@ -87,15 +87,42 @@
     .dashboard-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 2fr 1.5fr 1fr auto;
+      /* 5 explicit rows so #system-hetzner (row 5) is properly sized within the
+         fixed-height viewport — kanban gets the most space (2fr), secondary panels
+         share the remaining fraction, usage+local share a short row, containers get
+         a compact fixed min so it's always visible without overflow. */
+      grid-template-rows:
+        minmax(320px, 2fr)         /* row 1 — kanban (full-width) */
+        minmax(200px, 1.5fr)       /* row 2 — agents | hetzner-server */
+        minmax(160px, 1fr)         /* row 3 — local | crons */
+        minmax(110px, 0.8fr)       /* row 4 — usage */
+        minmax(140px, 1fr);        /* row 5 — containers (full-width) */
       gap: 12px;
       height: calc(100vh - 48px);
       padding: 12px;
       min-height: 0;
+      overflow: hidden;
     }
-    /* Row 3: crons (left) + usage (right) — both in the same row */
-    #crons    { grid-column: 1; grid-row: 3; }
-    #usage    { grid-column: 2; grid-row: 3; }
+    /* Kanban: full-width row 1 */
+    #kanban { grid-column: 1 / -1; grid-row: 1; }
+
+    /* Agent Monitor: row 2 left */
+    #agents { grid-column: 1; grid-row: 2; }
+
+    /* Hetzner Server: row 2 right */
+    #system-mac { grid-column: 2; grid-row: 2; }
+
+    /* Local Machine: row 3 left */
+    #system-local { grid-column: 1; grid-row: 3; }
+
+    /* Crons: row 3 right */
+    #crons { grid-column: 2; grid-row: 3; }
+
+    /* Usage: row 4 left — spans both cols so it breathes */
+    #usage { grid-column: 1 / -1; grid-row: 4; }
+
+    /* Containers: full-width row 5 */
+    #system-hetzner { grid-column: 1 / -1; grid-row: 5; }
 
     .panel {
       background: var(--surface);
@@ -140,6 +167,9 @@
     }
 
     /* ── Board ── */
+    /* The height chain: .panel (flex column) → .panel-body (flex:1, overflow-y:auto)
+       → .board-wrapper (flex:1, height:100%) → #board-root (flex:1) → .board (flex row).
+       Each step must propagate height so .col-cards can scroll internally. */
     .board-wrapper {
       padding: 0;
       height: 100%;
@@ -177,6 +207,14 @@
       font-size: 11px;
       font-weight: 600;
     }
+    /* #board-root is injected by JS inside .board-wrapper — must also flex so .board inherits height */
+    #board-root {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
     .board {
       display: flex;
       gap: 0;
@@ -226,6 +264,9 @@
       min-height: 0;
       flex: 1;
       overflow-y: auto;
+      /* Safety net: never taller than viewport minus the board header (~90px).
+         Cards scroll within the column rather than pushing the layout. */
+      max-height: calc(100vh - 160px);
       scrollbar-width: thin;
       scrollbar-color: #30363d transparent;
     }
@@ -799,14 +840,25 @@
       .app { height: auto; }
       .dashboard-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: 500px 500px 360px 360px 360px 360px auto;
+        /* 7 stacked panels on mobile — fixed heights so each panel has enough space */
+        grid-template-rows: 500px 500px 360px 360px 360px 200px 360px;
         height: auto;
+        overflow: visible;
       }
-      #crons  { grid-column: 1; grid-row: auto; }
-      #usage  { grid-column: 1; grid-row: auto; }
-      .board { min-width: unset; flex-direction: column; }
+      /* Reset all column/row placements to natural stacking order */
+      #kanban       { grid-column: 1; grid-row: auto; }
+      #agents       { grid-column: 1; grid-row: auto; }
+      #system-mac   { grid-column: 1; grid-row: auto; }
+      #system-local { grid-column: 1; grid-row: auto; }
+      #crons        { grid-column: 1; grid-row: auto; }
+      #usage        { grid-column: 1; grid-row: auto; }
+      #system-hetzner { grid-column: 1; grid-row: auto; }
+      /* Kanban board stacks vertically on mobile */
+      .board { min-width: unset; flex-direction: column; height: auto; }
       .column { max-width: 100%; }
       .column + .column { border-left: none; border-top: 1px solid var(--border); }
+      /* Col-cards: remove viewport-relative max-height on mobile, use natural height */
+      .col-cards { max-height: 300px; }
       .topbar { height: auto; padding: 10px 12px; gap: 8px; flex-wrap: wrap; }
     }
   </style>
@@ -894,7 +946,7 @@
         </div>
       </section>
 
-      <section class="panel" id="system-hetzner" style="grid-column: 1 / -1;">
+      <section class="panel" id="system-hetzner">
         <div class="panel-header">
           <span>Containers</span>
           <span class="panel-count mono" id="hetzner-label">—</span>
