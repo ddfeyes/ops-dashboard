@@ -489,6 +489,13 @@
     #agents-root::-webkit-scrollbar-track { background: transparent; }
     #agents-root::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
 
+    /* Containers list — constrain height so all 26 containers are scrollable */
+    #hetzner-root {
+      max-height: 300px;
+      scrollbar-width: thin;
+      scrollbar-color: #30363d transparent;
+    }
+
     .agent-card {
       display: flex;
       align-items: center;
