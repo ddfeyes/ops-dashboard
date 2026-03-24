@@ -1192,6 +1192,17 @@
   </div>`;
       }
 
+      let loadHtml = "";
+      const load = server.load_avg || {};
+      if (load.load1 != null) {
+        const cpus = load.cpu_count || 1;
+        const loadColor = load.load1 >= cpus ? "#f85149" : load.load1 >= cpus*0.7 ? "#e3b341" : "#3fb950";
+        loadHtml = `<div class="metric-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">LOAD</span>
+    <span style="font-size:12px;font-weight:500;font-family:'JetBrains Mono',monospace;color:${loadColor}">${load.load1} / ${load.load5} / ${load.load15}</span>
+  </div>`;
+      }
+
       const temps = server.temperatures || {};
       const tempC = temps.Tctl || temps.Composite || null;
       let tempHtml = "";
@@ -1209,6 +1220,7 @@
         metricBarHtml("Disk", disk.percent || 0, diskDetail) +
         netHtml +
         uptimeHtml +
+        loadHtml +
         tempHtml;
     }
 

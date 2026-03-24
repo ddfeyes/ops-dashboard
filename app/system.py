@@ -53,6 +53,8 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
     disk = psutil.disk_usage("/")
     net = psutil.net_io_counters()
     boot_time = psutil.boot_time()
+    load1, load5, load15 = psutil.getloadavg()
+    cpu_count = psutil.cpu_count() or 1
 
     temps: dict[str, float] = {}
     try:
@@ -91,6 +93,12 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
             "bytes_recv": net.bytes_recv,
         },
         "uptime_seconds": int(time.time() - boot_time),
+        "load_avg": {
+            "load1": round(load1, 2),
+            "load5": round(load5, 2),
+            "load15": round(load15, 2),
+            "cpu_count": cpu_count,
+        },
     }
 
 
