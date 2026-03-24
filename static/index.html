@@ -707,6 +707,15 @@
       max-width: 110px;
     }
 
+    .container-uptime {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: "JetBrains Mono", Consolas, monospace;
+      flex-shrink: 0;
+      opacity: 0.8;
+    }
+
     .status-error {
       display: flex;
       align-items: flex-start;
@@ -1190,11 +1199,13 @@
         const status = (c.Status || c.State || "").toLowerCase();
         const dotColor = status.includes("up") || status.includes("running")
           ? "#3fb950" : "#f85149";
+        const startedAt = c.StartedAt || "";
+        const uptime = startedAt ? relTime(startedAt) : "";
         return `
           <div class="container-row">
             <span class="container-dot" style="background:${dotColor}"></span>
             <span class="container-name">${escHtml(name)}</span>
-            <span class="container-image">${escHtml(image)}</span>
+            <span class="container-uptime">${escHtml(uptime)}</span>
           </div>`;
       }).join("");
       rootEl.innerHTML = `<div class="containers-label">Running containers</div>${rows}`;
