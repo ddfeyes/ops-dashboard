@@ -172,7 +172,13 @@ def get_mac_metrics() -> dict[str, Any] | None:
         import paramiko  # type: ignore
 
         client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        # Use RejectPolicy + known_hosts to prevent MITM attacks (issue #104)
+        client.load_system_host_keys()
+        try:
+            client.load_host_keys(os.path.expanduser("~/.ssh/known_hosts"))
+        except FileNotFoundError:
+            pass
+        client.set_missing_host_key_policy(paramiko.RejectPolicy())
         client.connect(
             hostname=MAC_SSH_HOST,
             port=MAC_SSH_PORT,
