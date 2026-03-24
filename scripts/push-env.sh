@@ -34,6 +34,9 @@ print(json.dumps(result, separators=(',', ':')))
 PYEOF
 )
 
+echo "==> Getting cron jobs..."
+CRONS_JSON=$(openclaw cron list --json 2>/dev/null || echo '[]')
+
 echo "==> Getting GH_TOKEN..."
 GH_TOKEN=$(gh auth token)
 
@@ -46,6 +49,7 @@ cat > "$ENV_FILE" << EOF
 ${AGENTS_JSON}
 OPENCLAW_AGENTS_STATUS_JSON=${AGENTS_STATUS}
 GH_TOKEN=${GH_TOKEN}
+OPENCLAW_GATEWAY_CRONS_JSON=${CRONS_JSON}
 EOF
 
 echo "==> Pushing to Hetzner..."
