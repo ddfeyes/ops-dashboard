@@ -52,6 +52,7 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage("/")
     net = psutil.net_io_counters()
+    boot_time = psutil.boot_time()
 
     temps: dict[str, float] = {}
     try:
@@ -89,6 +90,7 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
             "bytes_sent": net.bytes_sent,
             "bytes_recv": net.bytes_recv,
         },
+        "uptime_seconds": int(time.time() - boot_time),
     }
 
 
