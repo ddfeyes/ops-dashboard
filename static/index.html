@@ -1183,6 +1183,15 @@
   </div>`;
       }
 
+      let uptimeHtml = "";
+      if (server.uptime_seconds != null) {
+        const fmtUptime = s => s < 3600 ? Math.floor(s/60)+"m" : s < 86400 ? Math.floor(s/3600)+"h "+Math.floor((s%3600)/60)+"m" : Math.floor(s/86400)+"d "+Math.floor((s%86400)/3600)+"h";
+        uptimeHtml = `<div class="metric-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">UPTIME</span>
+    <span style="font-size:12px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--muted)">${fmtUptime(server.uptime_seconds)}</span>
+  </div>`;
+      }
+
       const temps = server.temperatures || {};
       const tempC = temps.Tctl || temps.Composite || null;
       let tempHtml = "";
@@ -1199,6 +1208,7 @@
         metricBarHtml("Memory", mem.percent || 0, memDetail) +
         metricBarHtml("Disk", disk.percent || 0, diskDetail) +
         netHtml +
+        uptimeHtml +
         tempHtml;
     }
 
