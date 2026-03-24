@@ -28,10 +28,13 @@
       --col-done-accent:     #3fb950;
       --col-blocked-accent:  #f85149;
 
+      --surface-raised: #1c2128;  /* slightly lighter than --surface — raised elements */
+      --surface-header: #1c2128;  /* panel headers, section dividers */
+
       --tag-feat:  #1f6feb; --tag-feat-bg:  #0d2245;
       --tag-fix:   #f85149; --tag-fix-bg:   #2d0d0d;
       --tag-infra: #a371f7; --tag-infra-bg: #1e1240;
-      --tag-chore: #8b949e; --tag-chore-bg: #21262d;
+      --tag-chore: #8b949e; --tag-chore-bg: var(--surface-raised);
       --tag-docs:  #39d353; --tag-docs-bg:  #0d2818;
     }
 
@@ -141,7 +144,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #21262d;
+      background: var(--surface-header);
       font-weight: 600;
       font-size: 11px;
       text-transform: uppercase;
@@ -332,7 +335,7 @@
     .tag-infra { color: var(--tag-infra); background: var(--tag-infra-bg); }
     .tag-chore { color: var(--tag-chore); background: var(--tag-chore-bg); }
     .tag-docs  { color: var(--tag-docs);  background: var(--tag-docs-bg); }
-    .tag-other { color: var(--muted); background: #21262d; }
+    .tag-other { color: var(--muted); background: var(--surface-raised); }
 
     .card-meta {
       display: flex;
@@ -452,7 +455,7 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: #6e7681;
-      border-top: 1px solid #21262d;
+      border-top: 1px solid var(--border);
       margin-top: 10px;
     }
     .agent-section-header:first-child {
@@ -521,7 +524,7 @@
     .ci-success  { color: #3fb950; background: #0d2818; }
     .ci-failure  { color: #f85149; background: #2d0d0d; }
     .ci-pending  { color: #e3b341; background: #2d1e00; }
-    .ci-unknown  { color: var(--muted); background: #21262d; }
+    .ci-unknown  { color: var(--muted); background: var(--surface-raised); }
     .review-badge {
       font-size: 10px;
       padding: 1px 6px;
@@ -607,7 +610,7 @@
     }
     .agent-status-active  { color: #3fb950; background: #0d2818; }
     .agent-status-idle    { color: #e3b341; background: #2b2006; }
-    .agent-status-offline { color: #8b949e; background: #21262d; }
+    .agent-status-offline { color: #8b949e; background: var(--surface-raised); }
     .agent-last-seen {
       font-size: 10px;
       color: #484f58;
