@@ -6,6 +6,8 @@ import re
 import subprocess
 from typing import Optional
 
+from app.agents import get_openclaw_agents
+
 # Repos to fetch — override with KANBAN_REPOS env var (comma-separated)
 DEFAULT_REPOS = ["ddfeyes/ops-dashboard", "ddfeyes/svc-dash"]
 
@@ -84,9 +86,13 @@ def _build_card(
     pr_url: Optional[str],
     timestamp: Optional[str],
     url: str,
+    agent_statuses: dict[str, str] | None = None,
 ) -> dict:
     tags = list({_label_to_tag(n) for n in label_names})
     agent = assignees[0]["login"] if assignees else None
+    agent_status: Optional[str] = None
+    if agent and agent_statuses:
+        agent_status = agent_statuses.get(agent.lower())
     return {
         "id": card_id,
         "title": title,
@@ -94,9 +100,23 @@ def _build_card(
         "tags": tags,
         "pr_url": pr_url,
         "agent": agent,
+        "agent_status": agent_status,
         "timestamp": timestamp,
         "url": url,
     }
+
+
+def _build_agent_statuses() -> dict[str, str]:
+    """Build a login→status mapping from the agents list (best-effort)."""
+    try:
+        agents = get_openclaw_agents()
+        return {
+            (a.get("id") or "").lower(): a.get("status") or "offline"
+            for a in agents
+            if a.get("id")
+        }
+    except Exception:
+        return {}
 
 
 def fetch_kanban_cards() -> list[dict]:
@@ -107,6 +127,7 @@ def fetch_kanban_cards() -> list[dict]:
     board rather than crashing).
     """
     repos = _get_repos()
+    agent_statuses = _build_agent_statuses()
     cards: list[dict] = []
 
     for repo in repos:
@@ -166,6 +187,7 @@ def fetch_kanban_cards() -> list[dict]:
                 pr_url=linked_pr["url"] if linked_pr else None,
                 timestamp=timestamp,
                 url=issue["url"],
+                agent_statuses=agent_statuses,
             ))
 
         # Standalone open PRs (not linked to any issue in this repo)
@@ -184,6 +206,7 @@ def fetch_kanban_cards() -> list[dict]:
                 pr_url=pr["url"],
                 timestamp=pr.get("createdAt"),
                 url=pr["url"],
+                agent_statuses=agent_statuses,
             ))
 
     return cards

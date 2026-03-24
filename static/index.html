@@ -368,7 +368,7 @@
     .agent-dot {
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: var(--accent);
+      background: var(--muted);
       flex-shrink: 0;
     }
     .card-time { font-size: 11px; color: var(--muted); }
@@ -1070,8 +1070,11 @@
            </a>`
         : "";
 
+      const agentColor = card.agent_status === 'active' ? '#3fb950'
+        : card.agent_status === 'idle' ? '#e3b341'
+        : '#8b949e';
       const agent = card.agent
-        ? `<span class="card-agent"><span class="agent-dot"></span>${escHtml(card.agent)}</span>`
+        ? `<span class="card-agent"><span class="agent-dot" style="background:${agentColor}"></span>${escHtml(card.agent)}</span>`
         : "";
 
       const ts = card.timestamp ? `<span class="card-time">${relTime(card.timestamp)}</span>` : "";
