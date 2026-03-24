@@ -713,6 +713,7 @@
     .cron-name { font-weight: 500; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cron-agent { font-size: 11px; color: var(--muted); }
     .cron-meta { font-size: 11px; color: var(--muted); font-family: "JetBrains Mono", Consolas, monospace; margin-left: auto; flex-shrink: 0; }
+    .cron-err-badge { background: rgba(248,81,73,0.18); color: #f85149; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; margin-left: 6px; }
 
     /* ── System Metrics ── */
     .metric-row { margin-bottom: 12px; }
@@ -1534,6 +1535,7 @@
           if (rootEl) rootEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⏱</div><div>No cron jobs</div><div class="empty-state-detail">Set OPENCLAW_GATEWAY_CRONS_JSON env var</div></div>`;
           return;
         }
+        jobs.sort((a, b) => (b.consecutive_errors || 0) - (a.consecutive_errors || 0));
         if (rootEl) rootEl.innerHTML = jobs.map(j => {
           const dotColor = j.consecutive_errors > 0 ? "#f85149" : j.last_status === "ok" ? "#3fb950" : "#e3b341";
           const interval = j.interval_min ? j.interval_min + "m" : "?";
@@ -1541,13 +1543,16 @@
           const dur = j.last_duration_ms ? Math.round(j.last_duration_ms / 1000) + "s" : "";
           const nextRunMs = j.next_run ? new Date(j.next_run).getTime() - Date.now() : 0;
           const nextStr = nextRunMs > 5000 ? "▶ in " + Math.round(nextRunMs / 60000) + "m" : "▶ now";
-          return `<div class="cron-row">
+          const errBadge = j.consecutive_errors > 0 ? `<span class="cron-err-badge">${j.consecutive_errors} err</span>` : "";
+          const errSeg = j.consecutive_errors > 0 ? ` · × ${j.consecutive_errors} errors` : "";
+          const rowStyle = j.consecutive_errors > 0 ? ` style="background:rgba(248,81,73,0.06)"` : "";
+          return `<div class="cron-row"${rowStyle}>
             <span class="cron-dot" style="background:${dotColor}"></span>
             <div style="flex:1;min-width:0">
-              <div class="cron-name">${escHtml(j.name)}</div>
+              <div class="cron-name">${escHtml(j.name)}${errBadge}</div>
               <div class="cron-agent">${escHtml(j.agent)} · every ${escHtml(interval)}</div>
             </div>
-            <div class="cron-meta">${escHtml(lastRun)}${dur ? " · " + escHtml(dur) : ""} · ${escHtml(nextStr)}</div>
+            <div class="cron-meta">${escHtml(lastRun)}${dur ? " · " + escHtml(dur) : ""}${errSeg} · ${escHtml(nextStr)}</div>
           </div>`;
         }).join("");
       } catch(e) {
