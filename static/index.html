@@ -864,6 +864,24 @@
       .col-cards { max-height: 300px; }
       .topbar { height: auto; padding: 10px 12px; gap: 8px; flex-wrap: wrap; }
     }
+    .alert-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: #2d0606;
+      border-top: 1px solid #f85149;
+      border-bottom: 1px solid #f85149;
+      padding: 6px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #f85149;
+      letter-spacing: 0.4px;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      flex-shrink: 0;
+    }
+    .alert-bar.visible {
+      display: flex;
+    }
   </style>
 </head>
 <body>
@@ -877,7 +895,7 @@
         <div id="status" class="mono">Loading…</div>
       </div>
     </header>
-    <div id="alert-bar" style="display:none;background:#3d1515;border-bottom:1px solid #f85149;padding:5px 16px;font-size:11px;color:#f85149;font-family:'JetBrains Mono',Consolas,monospace;font-weight:600;letter-spacing:.4px;flex-shrink:0"></div>
+    <div id="alert-bar" class="alert-bar"></div>
 
     <main class="dashboard-grid">
       <section class="panel" id="kanban">
@@ -1428,9 +1446,9 @@
       if (!bar) return;
       if (alerts.length) {
         bar.textContent = "⚠ HETZNER: " + alerts.join(" · ");
-        bar.style.display = "block";
+        bar.classList.add('visible');
       } else {
-        bar.style.display = "none";
+        bar.classList.remove('visible');
       }
     }
 
