@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from app.agents import get_ao_sessions, get_openclaw_agents
 from app.crons import get_crons
 from app.kanban import fetch_kanban_cards
-from app.system import get_hetzner_metrics, get_mac_metrics, get_server_metrics
+from app.system import get_hetzner_metrics, get_local_machine_metrics, get_mac_metrics, get_server_metrics
 from app.usage import get_usage
 
 _START_TIME = _time_module.time()
@@ -148,13 +148,16 @@ async def system_metrics() -> dict[str, Any]:
     else:
         mac = mac_result
 
-    # Legacy keys for backward compat with old frontend
+    # Local machine metrics (pre-computed by push-env.sh on the host)
+    local = get_local_machine_metrics()
+
     return {
         "server": server,
         "server_error": server_error,
-        "mac": server,  # frontend "mac" panel now shows server metrics
-        "hetzner": server,  # keep legacy key
+        "hetzner": server,
         "hetzner_error": server_error,
+        "local": local,
+        "mac": server,  # legacy key
         "mac_remote": mac,
         "mac_remote_error": mac_error,
     }
