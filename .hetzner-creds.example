@@ -1,0 +1,4 @@
+# Copy to .hetzner-creds and fill in real values (this file is gitignored)
+HETZNER_HOST="user3@YOUR_SERVER_IP"
+HETZNER_PORT="2203"
+HETZNER_PASS="your_password_here"
