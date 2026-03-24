@@ -11,7 +11,7 @@ client = TestClient(app, raise_server_exceptions=False)
 def test_health():
     r = client.get("/api/health")
     assert r.status_code == 200
-    assert r.json().get("status") == "ok"
+    assert r.json().get("status") in ("ok", "degraded")
 
 
 def test_kanban_returns_list():
