@@ -102,12 +102,18 @@ def _get_docker_containers() -> tuple[list[dict[str, Any]], bool]:
         containers = client.containers.list()
         result = []
         for c in containers:
+            started_at = ""
+            try:
+                started_at = c.attrs.get("State", {}).get("StartedAt", "")
+            except Exception:
+                pass
             result.append({
                 "ID": c.short_id,
                 "Names": c.name,
                 "Image": c.image.tags[0] if c.image.tags else (c.image.short_id or ""),
                 "Status": c.status,
                 "State": c.status,
+                "StartedAt": started_at,
             })
         client.close()
         return result, True
