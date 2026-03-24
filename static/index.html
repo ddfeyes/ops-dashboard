@@ -87,7 +87,7 @@
     .dashboard-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr auto;
+      grid-template-rows: 1fr 1fr 1fr;
       gap: 12px;
       height: calc(100vh - 48px);
       padding: 12px;
@@ -755,7 +755,7 @@
       .app { height: auto; }
       .dashboard-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: repeat(4, 360px) auto;
+        grid-template-rows: repeat(5, 360px);
         height: auto;
       }
       .board { min-width: unset; flex-direction: column; }
@@ -817,17 +817,17 @@
         </div>
       </section>
 
-      <section class="panel" id="crons" style="grid-column: 1 / -1; min-height: 120px;">
+      <section class="panel" id="crons">
         <div class="panel-header">
           <span>Cron Jobs</span>
           <span class="panel-count" id="crons-count">—</span>
         </div>
-        <div class="panel-body" id="crons-root" style="overflow-y: auto; max-height: 200px;">
+        <div class="panel-body" id="crons-root">
           <div class="empty-panel">Loading…</div>
         </div>
       </section>
 
-      <section class="panel" id="system-hetzner">
+      <section class="panel" id="system-hetzner" style="grid-column: 1 / -1;">
         <div class="panel-header">
           <span>Containers</span>
           <span class="panel-count mono" id="hetzner-label">—</span>
