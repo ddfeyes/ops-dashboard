@@ -14,6 +14,7 @@ services:
       - KANBAN_REPOS=ddfeyes/ops-dashboard,ddfeyes/svc-dash
       - GH_TOKEN=${GH_TOKEN}
       - SESSION_TOKEN_LIMIT=200000
+      - SERVER_LABEL=Hetzner
       - WEEKLY_ALL_TOKEN_LIMIT=10000000
       - WEEKLY_SONNET_TOKEN_LIMIT=7500000
     volumes:

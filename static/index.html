@@ -1173,6 +1173,16 @@
         document.getElementById(labelId).textContent = server.hostname || "live";
       }
 
+      const net = server.network || {};
+      let netHtml = "";
+      if (net.bytes_sent != null) {
+        const fmtBytes = b => b > 1073741824 ? (b/1073741824).toFixed(1)+"GB" : b > 1048576 ? (b/1048576).toFixed(0)+"MB" : (b/1024).toFixed(0)+"KB";
+        netHtml = `<div class="metric-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">NET ↑↓</span>
+    <span style="font-size:12px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--muted)">${fmtBytes(net.bytes_sent)} / ${fmtBytes(net.bytes_recv)}</span>
+  </div>`;
+      }
+
       const temps = server.temperatures || {};
       const tempC = temps.Tctl || temps.Composite || null;
       let tempHtml = "";
@@ -1188,6 +1198,7 @@
         metricBarHtml("CPU", server.cpu_percent || 0, "") +
         metricBarHtml("Memory", mem.percent || 0, memDetail) +
         metricBarHtml("Disk", disk.percent || 0, diskDetail) +
+        netHtml +
         tempHtml;
     }
 
