@@ -16,11 +16,11 @@
       --muted:    #8b949e;
       --accent:   #58a6ff;
 
-      --col-backlog:  rgba(139,148,158,0.05);
-      --col-progress: rgba(88,166,255,0.06);
-      --col-review:   rgba(227,179,65,0.06);
-      --col-done:     rgba(63,185,80,0.06);
-      --col-blocked:  rgba(248,81,73,0.06);
+      --col-backlog:  rgba(139,148,158,0.10);
+      --col-progress: rgba(88,166,255,0.12);
+      --col-review:   rgba(227,179,65,0.11);
+      --col-done:     rgba(63,185,80,0.10);
+      --col-blocked:  rgba(248,81,73,0.12);
 
       --col-backlog-accent:  #8b949e;
       --col-progress-accent: #58a6ff;
@@ -138,17 +138,17 @@
     }
 
     .panel-header {
-      height: 40px;
+      height: 36px;
       flex-shrink: 0;
-      padding: 0 14px;
+      padding: 0 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: var(--surface-header);
       font-weight: 600;
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.10em;
       color: var(--muted);
       border-bottom: 1px solid var(--border);
     }
@@ -278,11 +278,17 @@
     .col-cards::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
 
     /* Column themes — light tint + left border accent, no heavy fills */
-    .col-backlog  { background: var(--col-backlog);  border-left: 2px solid var(--col-backlog-accent) !important; }
-    .col-progress { background: var(--col-progress); border-left: 2px solid var(--col-progress-accent) !important; }
-    .col-review   { background: var(--col-review);   border-left: 2px solid var(--col-review-accent) !important; }
-    .col-done     { background: var(--col-done);     border-left: 2px solid var(--col-done-accent) !important; }
-    .col-blocked  { background: var(--col-blocked);  border-left: 2px solid var(--col-blocked-accent) !important; }
+    .col-backlog  { background: var(--col-backlog);  border-left: 3px solid var(--col-backlog-accent) !important; }
+    .col-progress { background: var(--col-progress); border-left: 3px solid var(--col-progress-accent) !important; }
+    .col-review   { background: var(--col-review);   border-left: 3px solid var(--col-review-accent) !important; }
+    .col-done     { background: var(--col-done);     border-left: 3px solid var(--col-done-accent) !important; }
+    .col-blocked  { background: var(--col-blocked);  border-left: 3px solid var(--col-blocked-accent) !important; }
+
+    .col-backlog  .col-header { background: rgba(139,148,158,0.08); }
+    .col-progress .col-header { background: rgba(88,166,255,0.10); }
+    .col-review   .col-header { background: rgba(227,179,65,0.09); }
+    .col-done     .col-header { background: rgba(63,185,80,0.09); }
+    .col-blocked  .col-header { background: rgba(248,81,73,0.10); }
 
     .col-backlog  .col-header { color: var(--muted); }
     .col-progress .col-header { color: #79c0ff; }
