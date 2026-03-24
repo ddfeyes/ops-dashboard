@@ -87,7 +87,7 @@
     .dashboard-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr 1fr;
+      grid-template-rows: 2fr 1fr auto;
       gap: 12px;
       height: calc(100vh - 48px);
       padding: 12px;
@@ -500,7 +500,7 @@
     /* OpenClaw agent cards */
     #agents-root {
       overflow-y: auto;
-      max-height: 380px;
+      max-height: 520px;
       scrollbar-width: thin;
       scrollbar-color: #30363d transparent;
     }
@@ -755,7 +755,7 @@
       .app { height: auto; }
       .dashboard-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: repeat(5, 360px);
+        grid-template-rows: 500px 500px 360px 360px auto;
         height: auto;
       }
       .board { min-width: unset; flex-direction: column; }
