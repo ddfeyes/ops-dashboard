@@ -770,6 +770,37 @@
       font-family: "JetBrains Mono", Consolas, monospace;
     }
     .metric-divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+    /* ── Compact metrics 2×2 grid ── */
+    .metrics-compact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 16px;
+      margin-top: 6px;
+    }
+    .metrics-compact-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .metrics-compact-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .metrics-compact-value {
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .metrics-compact-value.ok   { color: #3fb950; }
+    .metrics-compact-value.warn { color: #e3b341; }
+    .metrics-compact-value.crit { color: #f85149; }
+    .metrics-compact-value.muted { color: var(--muted); }
+
     .containers-label {
       font-size: 11px;
       color: var(--muted);
@@ -1337,34 +1368,36 @@
       const _net = server.network || {};
       if (_net.bytes_sent != null) {
         const _fb = b => b > 1073741824 ? (b/1073741824).toFixed(1)+"GB" : b > 1048576 ? (b/1048576).toFixed(0)+"MB" : (b/1024).toFixed(0)+"KB";
-        _compactItems.push(["NET ↑↓", _fb(_net.bytes_sent)+" / "+_fb(_net.bytes_recv), "var(--muted)"]);
+        _compactItems.push(["NET ↑↓", _fb(_net.bytes_sent)+" / "+_fb(_net.bytes_recv), "muted"]);
       }
 
       if (server.uptime_seconds != null) {
         const _u = server.uptime_seconds;
         const _fmt = _u < 3600 ? Math.floor(_u/60)+"m" : _u < 86400 ? Math.floor(_u/3600)+"h "+Math.floor((_u%3600)/60)+"m" : Math.floor(_u/86400)+"d "+Math.floor((_u%86400)/3600)+"h";
-        _compactItems.push(["UPTIME", _fmt, "var(--muted)"]);
+        _compactItems.push(["UPTIME", _fmt, "muted"]);
       }
 
       const _load = server.load_avg || {};
       if (_load.load1 != null) {
         const _cpus = _load.cpu_count || 1;
-        const _lc = _load.load1 >= _cpus ? "#f85149" : _load.load1 >= _cpus*0.7 ? "#e3b341" : "#3fb950";
-        _compactItems.push(["LOAD", _load.load1+" / "+_load.load5+" / "+_load.load15, _lc]);
+        const _lCls = _load.load1 >= _cpus ? "crit" : _load.load1 >= _cpus*0.7 ? "warn" : "ok";
+        _compactItems.push(["LOAD", _load.load1+" / "+_load.load5+" / "+_load.load15, _lCls]);
       }
 
       const _temps = server.temperatures || {};
       const _tempC = _temps.Tctl || _temps.Composite || null;
       if (_tempC != null) {
-        const _tc = _tempC > 85 ? "#f85149" : _tempC > 70 ? "#e3b341" : "#3fb950";
+        const _tc = _tempC > 85 ? "crit" : _tempC > 70 ? "warn" : "ok";
         _compactItems.push(["TEMP", _tempC.toFixed(1)+"°C", _tc]);
       }
 
-      const _grid = _compactItems.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;margin-top:6px">${
-        _compactItems.map(([lbl, val, col]) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid var(--border)">
-    <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">${lbl}</span>
-    <span style="font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;color:${col}">${val}</span>
-  </div>`).join("")
+      const _grid = _compactItems.length ? `<div class="metrics-compact-grid">${
+        _compactItems.map(([lbl, val, cls]) =>
+          `<div class="metrics-compact-row">
+      <span class="metrics-compact-label">${lbl}</span>
+      <span class="metrics-compact-value ${cls}">${val}</span>
+    </div>`
+        ).join("")
       }</div>` : "";
 
       document.getElementById(rootId).innerHTML =
