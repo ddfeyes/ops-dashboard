@@ -1173,10 +1173,22 @@
         document.getElementById(labelId).textContent = server.hostname || "live";
       }
 
+      const temps = server.temperatures || {};
+      const tempC = temps.Tctl || temps.Composite || null;
+      let tempHtml = "";
+      if (tempC != null) {
+        const tempColor = tempC > 85 ? "#f85149" : tempC > 70 ? "#e3b341" : "#3fb950";
+        tempHtml = `<div class="metric-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Temp</span>
+    <span style="font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;color:${tempColor}">${tempC.toFixed(1)}°C</span>
+  </div>`;
+      }
+
       document.getElementById(rootId).innerHTML =
         metricBarHtml("CPU", server.cpu_percent || 0, "") +
         metricBarHtml("Memory", mem.percent || 0, memDetail) +
-        metricBarHtml("Disk", disk.percent || 0, diskDetail);
+        metricBarHtml("Disk", disk.percent || 0, diskDetail) +
+        tempHtml;
     }
 
     function renderContainersPanel(server) {
@@ -1277,13 +1289,15 @@
           const interval = j.interval_min ? j.interval_min + "m" : "?";
           const lastRun = j.last_run ? relTime(j.last_run) : "never";
           const dur = j.last_duration_ms ? Math.round(j.last_duration_ms / 1000) + "s" : "";
+          const nextRunMs = j.next_run ? new Date(j.next_run).getTime() - Date.now() : 0;
+          const nextStr = nextRunMs > 5000 ? "▶ in " + Math.round(nextRunMs / 60000) + "m" : "▶ now";
           return `<div class="cron-row">
             <span class="cron-dot" style="background:${dotColor}"></span>
             <div style="flex:1;min-width:0">
               <div class="cron-name">${escHtml(j.name)}</div>
               <div class="cron-agent">${escHtml(j.agent)} · every ${escHtml(interval)}</div>
             </div>
-            <div class="cron-meta">${escHtml(lastRun)}${dur ? " · " + escHtml(dur) : ""}</div>
+            <div class="cron-meta">${escHtml(lastRun)}${dur ? " · " + escHtml(dur) : ""} · ${escHtml(nextStr)}</div>
           </div>`;
         }).join("");
       } catch(e) {
