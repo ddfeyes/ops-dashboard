@@ -87,7 +87,7 @@
     .dashboard-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 2fr 1fr auto;
+      grid-template-rows: 2fr 1fr 1fr auto;
       gap: 12px;
       height: calc(100vh - 48px);
       padding: 12px;
@@ -755,7 +755,7 @@
       .app { height: auto; }
       .dashboard-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: 500px 500px 360px 360px auto;
+        grid-template-rows: 500px 500px 360px 360px 360px auto;
         height: auto;
       }
       .board { min-width: unset; flex-direction: column; }
@@ -813,6 +813,16 @@
           <span class="panel-count mono" id="mac-label">live</span>
         </div>
         <div class="panel-body" id="mac-root">
+          <div class="empty-panel">Loading…</div>
+        </div>
+      </section>
+
+      <section class="panel" id="system-local">
+        <div class="panel-header">
+          <span>Local Machine</span>
+          <span class="panel-count mono" id="local-label">—</span>
+        </div>
+        <div class="panel-body" id="local-root">
           <div class="empty-panel">Loading…</div>
         </div>
       </section>
@@ -1278,7 +1288,6 @@
         const res = await fetch("/api/system");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        // server = local psutil (Hetzner), mac = mac metrics
         const server = data.server || data.hetzner || data.mac;
         const serverErr = data.server_error || data.hetzner_error;
         if (serverErr) {
@@ -1287,6 +1296,19 @@
           document.getElementById("mac-label").textContent = "error";
         } else {
           renderServerMetrics(server, "mac-root", "mac-label");
+        }
+        // Local machine metrics (pushed via push-env.sh from hui20metrov-MP200)
+        const local = data.local;
+        const localRootEl = document.getElementById("local-root");
+        const localLabelEl = document.getElementById("local-label");
+        if (local && !local.error) {
+          renderServerMetrics(local, "local-root", "local-label");
+        } else if (local && local.error) {
+          if (localRootEl) localRootEl.innerHTML = `<div class="status-error"><div class="status-error-icon">!</div><div><div>Error</div><div class="status-error-detail">${escHtml(local.error)}</div></div></div>`;
+          if (localLabelEl) localLabelEl.textContent = "error";
+        } else {
+          if (localRootEl) localRootEl.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💻</div><div>No data</div><div class="empty-state-detail">Run push-env.sh to inject LOCAL_MACHINE_JSON</div></div>`;
+          if (localLabelEl) localLabelEl.textContent = "offline";
         }
         renderContainersPanel(server);
       } catch (err) {
