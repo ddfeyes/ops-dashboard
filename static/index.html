@@ -87,15 +87,32 @@
     .dashboard-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 2fr 1.5fr 1fr auto;
+      grid-template-rows: minmax(300px, 2fr) minmax(190px, 1.5fr) minmax(150px, 1fr) minmax(100px, auto);
       gap: 12px;
       height: calc(100vh - 48px);
       padding: 12px;
       min-height: 0;
     }
-    /* Row 3: crons (left) + usage (right) — both in the same row */
-    #crons    { grid-column: 1; grid-row: 3; }
-    #usage    { grid-column: 2; grid-row: 3; }
+    /* Kanban: full-width row 1 */
+    #kanban { grid-column: 1 / -1; grid-row: 1; }
+
+    /* Agent Monitor: row 2 left */
+    #agents { grid-column: 1; grid-row: 2; }
+
+    /* Hetzner Server: row 2 right */
+    #system-mac { grid-column: 2; grid-row: 2; }
+
+    /* Local Machine: row 3 left */
+    #system-local { grid-column: 1; grid-row: 3; }
+
+    /* Crons: row 3 right */
+    #crons { grid-column: 2; grid-row: 3; }
+
+    /* Usage: row 4 left */
+    #usage { grid-column: 1; grid-row: 4; }
+
+    /* Containers: full-width row 5 */
+    #system-hetzner { grid-column: 1 / -1; grid-row: 5; }
 
     .panel {
       background: var(--surface);
@@ -799,11 +816,16 @@
       .app { height: auto; }
       .dashboard-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: 500px 500px 360px 360px 360px 360px auto;
+        grid-template-rows: 500px 500px 360px 360px 360px 360px 360px auto;
         height: auto;
       }
-      #crons  { grid-column: 1; grid-row: auto; }
-      #usage  { grid-column: 1; grid-row: auto; }
+      #kanban     { grid-column: 1; grid-row: auto; }
+      #agents     { grid-column: 1; grid-row: auto; }
+      #system-mac { grid-column: 1; grid-row: auto; }
+      #system-local { grid-column: 1; grid-row: auto; }
+      #crons      { grid-column: 1; grid-row: auto; }
+      #usage      { grid-column: 1; grid-row: auto; }
+      #system-hetzner { grid-column: 1; grid-row: auto; }
       .board { min-width: unset; flex-direction: column; }
       .column { max-width: 100%; }
       .column + .column { border-left: none; border-top: 1px solid var(--border); }
@@ -894,7 +916,7 @@
         </div>
       </section>
 
-      <section class="panel" id="system-hetzner" style="grid-column: 1 / -1;">
+      <section class="panel" id="system-hetzner">
         <div class="panel-header">
           <span>Containers</span>
           <span class="panel-count mono" id="hetzner-label">—</span>
