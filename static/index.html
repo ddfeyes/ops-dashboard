@@ -65,7 +65,9 @@
       background: var(--surface);
     }
     .header-left { display: flex; align-items: center; gap: 12px; }
-    .logo { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+    .logo { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+    .logo-icon { color: var(--accent); font-size: 14px; opacity: 0.9; }
+    .logo-badge { font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0.05em; }
     .header-right { display: flex; align-items: center; gap: 16px; }
     #refresh-btn {
       background: var(--surface);
@@ -95,11 +97,11 @@
          share the remaining fraction, usage+local share a short row, containers get
          a compact fixed min so it's always visible without overflow. */
       grid-template-rows:
-        minmax(320px, 2fr)         /* row 1 — kanban (full-width) */
-        minmax(200px, 1.5fr)       /* row 2 — agents | hetzner-server */
-        minmax(160px, 1fr)         /* row 3 — local | crons */
-        minmax(110px, 0.8fr)       /* row 4 — usage */
-        minmax(140px, 1fr);        /* row 5 — containers (full-width) */
+        minmax(260px, 2fr)         /* row 1 — kanban (full-width), reduced min for short viewports */
+        minmax(160px, 1.5fr)       /* row 2 — agents | hetzner-server */
+        minmax(130px, 1fr)         /* row 3 — local | crons */
+        minmax(90px, 0.7fr)        /* row 4 — usage */
+        minmax(110px, 0.9fr);      /* row 5 — containers (full-width), total min ~750px */
       gap: 12px;
       height: calc(100vh - 48px);
       padding: 12px;
@@ -936,7 +938,7 @@
   <div class="app">
     <header class="topbar">
       <div class="header-left">
-        <div class="logo">OpsDashboard</div>
+        <div class="logo"><span class="logo-icon">⬡</span> OpsDash <span class="logo-badge">LIVE</span></div>
       </div>
       <div class="header-right">
         <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
