@@ -256,8 +256,8 @@ def get_ao_sessions() -> list[dict[str, Any]]:
             return []
         raw_list: list[dict] = json.loads(result.stdout)
     except FileNotFoundError:
-        # ao not installed — return sentinel so frontend can show helpful message
-        return [{"_error": "ao_not_installed", "_message": "ao CLI not available in this environment"}]
+        # ao not installed — return empty list (AO section was removed from frontend)
+        return []
     except (subprocess.TimeoutExpired, json.JSONDecodeError):
         return []
 
