@@ -1,7 +1,36 @@
-project: ops-dashboard
-status: REVIEW
-current_module: DESIGN — #112 #113
-last_updated: '2026-03-25T11:57:00Z'
+blockers:
+- sessions_send gateway timeout for Masami, Mika, Lain
+cron:
+  push_env: '*/30 * * * * — loads creds from .hetzner-creds'
+current_module: 'DESIGN POLISH — #120 deployed'
+design_audit_mika_2026_03_24:
+  issues_closed:
+  - 111
+  - 112
+  - 113
+  - 114
+  - 115
+  issues_filed:
+  - 111
+  - 112
+  - 113
+  - 114
+  - 115
+  issues_pending: []
+  mika_verify_sent: '2026-03-25T23:02:00Z'
+  prs_in_review: []
+  prs_merged:
+  - 116
+  - 117
+  - 118
+  - 119
+last_updated: '2026-03-26T02:52:45Z'
+last_verified: '2026-03-25T23:02:00Z'
+live_check:
+  agents: 10/10
+  commit: ea1bb85
+  health: ok
+  hetzner: docker 21 containers running
 modules:
 - id: M1
   name: Backend API
@@ -21,30 +50,9 @@ modules:
 - id: M6
   name: Bug fixes + Design
   status: DONE
-pipeline_state: REVIEW
-pipeline_notes: 'PR#119 (logo+grid) in Masami review. PR#118 (#115 agent-dot) confirmed merged main d66a5f1.'
-pr:
-  number: 119
-  branch: fix/issue-112-113
-  commit: 67a62a8
-  description: 'design(#112,#113): logo identity (⬡ OpsDash LIVE) + grid row sizing (930px→750px min)'
-last_verified: '2026-03-25T11:57:00Z'
-live_check:
-  health: ok
-  agents: '10/10'
-  hetzner: 'docker 26 containers running'
-cron:
-  push_env: '*/30 * * * * — loads creds from .hetzner-creds'
-blockers:
-  - masami sessions_send gateway timeout — using inbox fallback at /home/hui20metrov/agents/masami/inbox/
-open_issues:
-  - 27  # design pass — closes when PR#119 merges
-  - 29  # agent last_seen timestamp in cards
-  - 112  # logo identity — PR#119
-  - 113  # grid sizing — PR#119
-design_audit_mika_2026_03_24:
-  issues_filed: [111, 112, 113, 114, 115]
-  prs_merged: [116, 117, 118]
-  prs_in_review: [119]
-  issues_closed: [111, 114, 115]
-  issues_pending: [112, 113]
+open_issues: []
+pipeline_notes: 'PR#121 (7 design polish improvements) merged and deployed. Issues
+  #120 + #27 closed.'
+pipeline_state: WORKING
+project: ops-dashboard
+status: WORKING
