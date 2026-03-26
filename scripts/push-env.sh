@@ -144,3 +144,40 @@ sshpass -p "$HETZNER_PASS" ssh -o StrictHostKeyChecking=no -p "$HETZNER_PORT" "$
   "cd $REMOTE_DIR && docker compose --env-file ops-dashboard.env up -d"
 
 echo "==> Done! ops-dashboard.env pushed and container restarted."
+
+# ── Sync agent/cron data to kanban-api ──────────────────────────
+echo "==> Syncing OPENCLAW vars to kanban .env..."
+sshpass -p "$HETZNER_PASS" ssh -o StrictHostKeyChecking=no -p "$HETZNER_PORT" "$HETZNER_HOST" \
+  "python3 << 'PYEOF'
+import re, subprocess
+
+# Read fresh values from ops-dashboard.env
+ops_env = {}
+with open('/home/user3/ops-dashboard/ops-dashboard.env') as f:
+    for line in f:
+        line = line.strip()
+        if '=' in line:
+            k, v = line.split('=', 1)
+            ops_env[k.strip()] = v.strip()
+
+# Read kanban .env
+with open('/srv/kanban/.env') as f:
+    raw = f.read()
+
+# Remove stale OPENCLAW_ lines
+raw = re.sub(r'OPENCLAW_[^\n]*\n?', '', raw).rstrip('\n')
+
+# Append fresh values
+for k in ['OPENCLAW_AGENTS_JSON', 'OPENCLAW_AGENTS_STATUS_JSON', 'OPENCLAW_GATEWAY_CRONS_JSON']:
+    v = ops_env.get(k, '')
+    if v:
+        raw += f'\n{k}={v}'
+
+with open('/srv/kanban/.env', 'w') as f:
+    f.write(raw + '\n')
+
+# Restart kanban-api to pick up new env (no rebuild needed)
+subprocess.run(['docker', 'restart', 'kanban-api'], capture_output=True)
+print('kanban .env synced and kanban-api restarted')
+PYEOF"
+echo "==> kanban sync done."
