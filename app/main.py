@@ -27,6 +27,9 @@ _executor = ThreadPoolExecutor(max_workers=4)
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
+    # Warm the kanban cache in background so the first browser request is fast
+    loop = asyncio.get_running_loop()
+    loop.run_in_executor(_executor, fetch_kanban_cards)
     yield
     _executor.shutdown(wait=False)
 
