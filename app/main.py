@@ -6,6 +6,7 @@ import asyncio
 import os
 import time as _time_module
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
@@ -21,8 +22,16 @@ from app.system import get_hetzner_metrics, get_local_machine_metrics, get_mac_m
 from app.usage import get_usage
 
 _START_TIME = _time_module.time()
+_executor = ThreadPoolExecutor(max_workers=4)
 
-app = FastAPI(title="Ops Dashboard", version="0.1.0")
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    yield
+    _executor.shutdown(wait=False)
+
+
+app = FastAPI(title="Ops Dashboard", version="0.1.0", lifespan=_lifespan)
 
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
 if os.path.isdir(_static_dir):
@@ -38,13 +47,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-_executor = ThreadPoolExecutor(max_workers=4)
-
-
-@app.on_event("shutdown")
-async def _shutdown() -> None:
-    _executor.shutdown(wait=False)
 
 
 @app.get("/")
