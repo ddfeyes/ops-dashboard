@@ -4,7 +4,17 @@ import json
 import os
 import re
 import subprocess
+import threading
+import time
 from typing import Optional
+
+# ---------------------------------------------------------------------------
+# Response cache — avoids hammering GitHub API on every 30s frontend poll
+# ---------------------------------------------------------------------------
+_kanban_cache: list[dict] | None = None
+_kanban_cache_ts: float = 0.0
+_kanban_lock = threading.Lock()
+_KANBAN_TTL_SECS: int = int(os.environ.get("KANBAN_CACHE_TTL", "60"))
 
 from app.agents import get_openclaw_agents
 
@@ -120,6 +130,19 @@ def _build_agent_statuses() -> dict[str, str]:
 
 
 def fetch_kanban_cards() -> list[dict]:
+    """Return kanban cards, using a short TTL cache to avoid hammering GitHub API."""
+    global _kanban_cache, _kanban_cache_ts  # noqa: PLW0603
+    with _kanban_lock:
+        if _kanban_cache is not None and time.time() - _kanban_cache_ts < _KANBAN_TTL_SECS:
+            return _kanban_cache
+    result = _fetch_kanban_cards_uncached()
+    with _kanban_lock:
+        _kanban_cache = result
+        _kanban_cache_ts = time.time()
+    return result
+
+
+def _fetch_kanban_cards_uncached() -> list[dict]:
     """Fetch issues and PRs from configured repos and return kanban cards.
 
     Returns an empty list when gh CLI is unavailable or unauthenticated so
