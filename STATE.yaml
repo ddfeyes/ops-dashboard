@@ -2,7 +2,7 @@ blockers:
 - sessions_send gateway timeout for Masami, Mika, Lain
 cron:
   push_env: '*/30 * * * * — loads creds from .hetzner-creds'
-current_module: KANBAN REGRESSION FIX — push-env sync
+current_module: fix/143 lifespan — deployed
 design_audit_mika_2026_03_24:
   issues_closed:
   - 111
@@ -24,14 +24,15 @@ design_audit_mika_2026_03_24:
   - 117
   - 118
   - 119
-last_updated: '2026-03-26T07:01:25Z'
-last_verified: '2026-03-26T07:01:25Z'
+last_updated: '2026-03-26T09:03:29Z'
+last_verified: '2026-03-26T09:03:29Z'
 live_check:
   agents: 10/10
-  commit: 6c69ae5
+  commit: 361c660
+  cpu: 9.1%
   health: ok
   hetzner: docker 21 containers
-  kanban: 10 agents 5 active
+  temp_tctl: 82.6C
 modules:
 - id: M1
   name: Backend API
@@ -52,8 +53,8 @@ modules:
   name: Bug fixes + Design
   status: DONE
 open_issues: []
-pipeline_notes: 'Kanban regression fixed: kanban-api now reads env vars, gateway-net
-  reconnected, push-env.sh syncs kanban every 30m. 0 open issues.'
+pipeline_notes: 'PR#144 merged: on_event→lifespan deprecation fix. Tests 4/4. 0 open
+  issues.'
 pipeline_state: WORKING
 project: ops-dashboard
 status: WORKING
