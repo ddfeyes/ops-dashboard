@@ -1038,6 +1038,14 @@
               ✓ Done <span class="done-badge-count" id="done-badge-count">0</span>
             </div>
             <div class="scroll-hint" id="scroll-hint">scroll → more columns</div>
+            <div style="position:relative;display:flex;align-items:center;">
+              <input id="kanban-search" type="text" placeholder="🔍 filter…"
+                style="background:var(--surface-raised);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:3px 22px 3px 7px;width:110px;outline:none;font-family:var(--font-ui);"
+                oninput="searchQuery=this.value;document.getElementById('ks-clear').style.display=this.value?'':'none';renderBoard(allCards);"
+              />
+              <span id="ks-clear" onclick="searchQuery='';document.getElementById('kanban-search').value='';this.style.display='none';renderBoard(allCards);"
+                style="display:none;position:absolute;right:5px;cursor:pointer;color:var(--muted);font-size:12px;user-select:none;">×</span>
+            </div>
             <div class="toolbar" id="toolbar"></div>
           </div>
         </div>
@@ -1125,6 +1133,7 @@
 
     let allCards = [];
     let activeRepo = "all";
+    let searchQuery = "";
     let refreshTimer = null;
     let countdown = 30;
 
@@ -1212,9 +1221,10 @@
 
     function renderBoard(cards) {
       renderToolbar(cards);
-      const filtered = activeRepo === "all"
-        ? cards
-        : cards.filter(c => c.id.startsWith(activeRepo + "#") || c.id.startsWith(activeRepo + "/"));
+      const q = searchQuery.trim().toLowerCase();
+      const filtered = cards
+        .filter(c => activeRepo === "all" || c.id.startsWith(activeRepo + "#") || c.id.startsWith(activeRepo + "/"))
+        .filter(c => !q || (c.title || "").toLowerCase().includes(q) || (c.id || "").toLowerCase().includes(q));
 
       const byCol = {};
       COLUMNS.forEach(c => { byCol[c.key] = []; });
