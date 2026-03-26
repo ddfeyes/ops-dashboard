@@ -231,6 +231,24 @@
       font-size: 11px;
       font-weight: 600;
     }
+    .done-expand-btn {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      padding: 5px 0;
+      background: rgba(63,185,80,0.08);
+      border: 1px solid rgba(63,185,80,0.2);
+      border-radius: var(--radius-sm);
+      color: #3fb950;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s;
+    }
+    .done-expand-btn:hover { background: rgba(63,185,80,0.16); }
+    .done-expand-collapse { color: var(--muted); background: transparent; border-color: var(--border); }
+    .done-expand-collapse:hover { background: var(--surface-raised); }
     /* #board-root is injected by JS inside .board-wrapper — must also flex so .board inherits height */
     #board-root {
       display: flex;
@@ -1184,6 +1202,8 @@
     let searchQuery = "";
     let refreshTimer = null;
     let countdown = 30;
+    let doneExpanded = false;
+    const DONE_PREVIEW = 10;
 
     function relTime(iso) {
       if (!iso) return "";
@@ -1283,8 +1303,17 @@
 
       const html = COLUMNS.filter(col => col.key === "backlog" || byCol[col.key].length > 0).map(col => {
         const colCards = byCol[col.key];
-        const cardsHtml = colCards.length
-          ? colCards.map(cardHtml).join("")
+        let visibleCards = colCards;
+        let expandToggle = "";
+        if (col.key === "done" && colCards.length > DONE_PREVIEW && !doneExpanded) {
+          visibleCards = colCards.slice(0, DONE_PREVIEW);
+          const hidden = colCards.length - DONE_PREVIEW;
+          expandToggle = `<button class="done-expand-btn" onclick="doneExpanded=true;renderBoard(allCards)">Show ${hidden} more ↓</button>`;
+        } else if (col.key === "done" && colCards.length > DONE_PREVIEW && doneExpanded) {
+          expandToggle = `<button class="done-expand-btn done-expand-collapse" onclick="doneExpanded=false;renderBoard(allCards)">Collapse ↑</button>`;
+        }
+        const cardsHtml = visibleCards.length
+          ? visibleCards.map(cardHtml).join("")
           : `<div class="empty-col">No items</div>`;
         return `
           <div class="column col-${col.key}">
@@ -1292,7 +1321,7 @@
               <span>${col.label}</span>
               <span class="col-count">${colCards.length}</span>
             </div>
-            <div class="col-cards">${cardsHtml}</div>
+            <div class="col-cards">${cardsHtml}${expandToggle}</div>
           </div>`;
       }).join("");
 
