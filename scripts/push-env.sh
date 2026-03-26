@@ -117,7 +117,7 @@ PYEOF
 )
 
 echo "==> Getting cron jobs..."
-CRONS_JSON=$(openclaw cron list --json 2>/dev/null | python3 -c 'import sys,json; d=json.load(sys.stdin); jobs=d if isinstance(d,list) else d.get("jobs",[]); m=[{"id":j.get("id",""),"name":j.get("name",""),"agentId":j.get("agentId",""),"enabled":j.get("enabled",True),"schedule":{"everyMs":j.get("schedule",{}).get("everyMs",0)},"state":{"lastRunAtMs":j.get("state",{}).get("lastRunAtMs",0),"nextRunAtMs":j.get("state",{}).get("nextRunAtMs",0),"lastRunStatus":j.get("state",{}).get("lastRunStatus","unknown"),"lastDurationMs":j.get("state",{}).get("lastDurationMs",0),"consecutiveErrors":j.get("state",{}).get("consecutiveErrors",0)}} for j in jobs]; print(json.dumps({"jobs":m},separators=(",",":")))' 2>/dev/null || echo '{"jobs":[]}')
+CRONS_JSON=$(openclaw cron list --json 2>/dev/null | python3 -c 'import sys,json; d=json.load(sys.stdin); jobs=d if isinstance(d,list) else d.get("jobs",[]); m=[{"id":j.get("id",""),"name":j.get("name",""),"agentId":j.get("agentId",""),"enabled":j.get("enabled",True),"schedule":j.get("schedule",{}),"state":{"lastRunAtMs":j.get("state",{}).get("lastRunAtMs",0),"nextRunAtMs":j.get("state",{}).get("nextRunAtMs",0),"lastRunStatus":j.get("state",{}).get("lastRunStatus","unknown"),"lastDurationMs":j.get("state",{}).get("lastDurationMs",0),"consecutiveErrors":j.get("state",{}).get("consecutiveErrors",0)}} for j in jobs]; print(json.dumps({"jobs":m},separators=(",",":")))' 2>/dev/null || echo '{"jobs":[]}')
 
 echo "==> Getting GH_TOKEN..."
 GH_TOKEN=$(gh auth token)

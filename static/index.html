@@ -112,7 +112,18 @@
     #kanban { grid-column: 1 / -1; grid-row: 1; }
 
     /* Agent Monitor: row 2 left */
-    #agents { grid-column: 1; grid-row: 2; }
+    #agents { grid-column: 1; grid-row: 2; position: relative; }
+    .scroll-fade {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 32px;
+      background: linear-gradient(transparent, var(--surface));
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 2;
+    }
+    .scroll-fade.visible { opacity: 1; }
 
     /* Hetzner Server: row 2 right */
     #system-mac { grid-column: 2; grid-row: 2; }
@@ -565,9 +576,10 @@
     /* OpenClaw agent cards */
     #agents-root {
       overflow-y: auto;
-      max-height: 520px;
+      max-height: calc(100% - 4px);
+      height: 100%;
       scrollbar-width: thin;
-      scrollbar-color: #30363d transparent;
+      scrollbar-color: var(--border-mid) transparent;
     }
     #agents-root::-webkit-scrollbar { width: 3px; }
     #agents-root::-webkit-scrollbar-track { background: transparent; }
@@ -816,8 +828,8 @@
       font-family: 'JetBrains Mono', monospace;
     }
     .metrics-compact-value.ok   { color: #3fb950; }
-    .metrics-compact-value.warn { color: #e3b341; }
-    .metrics-compact-value.crit { color: #f85149; }
+    .metrics-compact-value.warn { color: #e3b341 !important; }
+    .metrics-compact-value.crit { color: #f85149 !important; }
     .metrics-compact-value.muted { color: var(--muted); }
 
     .containers-label {
@@ -1045,6 +1057,7 @@
           </div>
           <div id="agents-root"><div class="empty-panel">Loading…</div></div>
         </div>
+        <div class="scroll-fade" id="agents-scroll-fade"></div>
       </section>
 
       <section class="panel" id="system-mac">
@@ -1392,6 +1405,19 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         renderAgents(data);
+        // Show scroll fade if agents list overflows
+        setTimeout(() => {
+          const root = document.getElementById("agents-root");
+          const fade = document.getElementById("agents-scroll-fade");
+          if (root && fade) {
+            const hasOverflow = root.scrollHeight > root.clientHeight + 8;
+            fade.className = hasOverflow ? "scroll-fade visible" : "scroll-fade";
+            root.addEventListener("scroll", () => {
+              const atBottom = root.scrollTop + root.clientHeight >= root.scrollHeight - 8;
+              fade.className = atBottom ? "scroll-fade" : "scroll-fade visible";
+            }, { passive: true });
+          }
+        }, 300);
       } catch (err) {
         document.getElementById("agents-root").innerHTML =
           `<div class="empty-state"><div class="empty-state-icon">WAIT</div><div>Awaiting agent data</div></div>`;
@@ -1632,7 +1658,7 @@
         jobs.sort((a, b) => (b.consecutive_errors || 0) - (a.consecutive_errors || 0));
         if (rootEl) rootEl.innerHTML = jobs.map(j => {
           const dotColor = j.consecutive_errors > 0 ? "#f85149" : j.last_status === "ok" ? "#3fb950" : "#e3b341";
-          const interval = j.interval_min ? j.interval_min + "m" : "?";
+          const interval = j.interval_min ? j.interval_min + "m" : j.schedule_expr ? j.schedule_expr : "?";
           const lastRun = j.last_run ? relTime(j.last_run) : "never";
           const dur = j.last_duration_ms ? Math.round(j.last_duration_ms / 1000) + "s" : "";
           const nextRunMs = j.next_run ? new Date(j.next_run).getTime() - Date.now() : 0;
