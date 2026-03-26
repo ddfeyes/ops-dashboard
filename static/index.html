@@ -996,6 +996,54 @@
       flex-shrink: 0;
     }
 
+    /* ── Container groups ── */
+    .containers-grouped {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .container-group {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .container-group-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      background: var(--surface);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: default;
+    }
+    .container-group-name {
+      flex: 1;
+      font-family: var(--font-mono);
+      color: var(--fg);
+    }
+    .container-group-count {
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 6px;
+      font-family: var(--font-mono);
+    }
+    .container-group-rows {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      padding: 4px;
+      background: var(--bg);
+    }
+    .container-group-rows .container-cell {
+      border: none;
+      border-radius: 2px;
+      background: var(--surface);
+    }
+
     /* ── Refresh pulse dot ── */
     #refresh-pulse {
       width: 6px; height: 6px;
@@ -1580,19 +1628,74 @@
       }
 
       labelEl.textContent = `${containers.length} container${containers.length !== 1 ? "s" : ""}`;
-      const rows = containers.map(c => {
+
+      // Group containers by project prefix (first segment before '-' or '_')
+      function containerPrefix(name) {
+        // Special cases: keep multi-word prefixes together
+        if (name.startsWith("mm-dashboard")) return "mm-dashboard";
+        if (name.startsWith("tg-")) return "tg-bots";
+        if (name.startsWith("trading_bot")) return "trading";
+        const m = name.match(/^([a-z0-9]+)[-_]/);
+        return m ? m[1] : name;
+      }
+
+      const groups = {};
+      containers.forEach(c => {
         const name = c.Names || c.Name || c.ID || "?";
-        const status = (c.Status || c.State || "").toLowerCase();
-        const dotColor = status.includes("up") || status.includes("running") ? "#3fb950" : "#f85149";
-        const startedAt = c.StartedAt || "";
-        const uptime = startedAt ? relTime(startedAt) : "";
-        return `<div class="container-cell">
-          <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
-          <span class="container-cell-name">${escHtml(name)}</span>
-          <span class="container-cell-uptime">${escHtml(uptime)}</span>
-        </div>`;
-      }).join("");
-      rootEl.innerHTML = `<div class="containers-label">Running containers</div><div class="containers-grid">${rows}</div>`;
+        const prefix = containerPrefix(name);
+        if (!groups[prefix]) groups[prefix] = [];
+        groups[prefix].push(c);
+      });
+
+      const groupKeys = Object.keys(groups).sort();
+      const useGrouped = groupKeys.length > 1 && groupKeys.length < containers.length;
+
+      let html = "";
+      if (useGrouped) {
+        groupKeys.forEach(prefix => {
+          const items = groups[prefix];
+          const allOk = items.every(c => {
+            const s = (c.Status || c.State || "").toLowerCase();
+            return s.includes("up") || s.includes("running");
+          });
+          const groupDot = allOk ? "#3fb950" : "#f85149";
+          const rows = items.map(c => {
+            const name = c.Names || c.Name || c.ID || "?";
+            const status = (c.Status || c.State || "").toLowerCase();
+            const dotColor = status.includes("up") || status.includes("running") ? "#3fb950" : "#f85149";
+            const startedAt = c.StartedAt || "";
+            const uptime = startedAt ? relTime(startedAt) : "";
+            return `<div class="container-cell">
+              <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
+              <span class="container-cell-name">${escHtml(name)}</span>
+              <span class="container-cell-uptime">${escHtml(uptime)}</span>
+            </div>`;
+          }).join("");
+          html += `<div class="container-group">
+            <div class="container-group-header">
+              <span class="container-dot" style="background:${groupDot};flex-shrink:0"></span>
+              <span class="container-group-name">${escHtml(prefix)}</span>
+              <span class="container-group-count">${items.length}</span>
+            </div>
+            <div class="container-group-rows">${rows}</div>
+          </div>`;
+        });
+        rootEl.innerHTML = `<div class="containers-label">Running containers</div><div class="containers-grouped">${html}</div>`;
+      } else {
+        const rows = containers.map(c => {
+          const name = c.Names || c.Name || c.ID || "?";
+          const status = (c.Status || c.State || "").toLowerCase();
+          const dotColor = status.includes("up") || status.includes("running") ? "#3fb950" : "#f85149";
+          const startedAt = c.StartedAt || "";
+          const uptime = startedAt ? relTime(startedAt) : "";
+          return `<div class="container-cell">
+            <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
+            <span class="container-cell-name">${escHtml(name)}</span>
+            <span class="container-cell-uptime">${escHtml(uptime)}</span>
+          </div>`;
+        }).join("");
+        rootEl.innerHTML = `<div class="containers-label">Running containers</div><div class="containers-grid">${rows}</div>`;
+      }
     }
 
     function checkAlerts(server) {
