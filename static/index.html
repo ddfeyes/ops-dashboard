@@ -1784,8 +1784,17 @@
             if (everyHr) return "every " + everyHr[1] + "h";
             // M H * * *  → daily HH:MM
             const daily = e.match(/^(\d+)\s+(\d+)\s+\*\s+\*\s+\*$/);
-            if (daily) { const hh = daily[2].padStart(2,"0"), mm = daily[1].padStart(2,"0"); return "daily " + hh + ":" + mm; }
-            return e;
+            if (daily) { const hh = daily[2].padStart(2,"0"), mm = daily[1].padStart(2,"0"); return "daily at " + hh + ":" + mm; }
+            // M H * * 1-5 → weekdays at HH:MM
+            const weekdays = e.match(/^(\d+)\s+(\d+)\s+\*\s+\*\s+1-5$/);
+            if (weekdays) { const hh = weekdays[2].padStart(2,"0"), mm = weekdays[1].padStart(2,"0"); return "weekdays at " + hh + ":" + mm; }
+            // 0 */N * * * → every Nh (hour-aligned)
+            const everyHrAlt = e.match(/^0\s+\*\/(\d+)\s+\*\s+\*\s+\*$/);
+            if (everyHrAlt) return "every " + everyHrAlt[1] + "h";
+            // M * * * * → every hour at :MM
+            const hourly = e.match(/^(\d+)\s+\*\s+\*\s+\*\s+\*$/);
+            if (hourly) return "hourly at :" + hourly[1].padStart(2,"0");
+            return e; // raw fallback
           })();
           const lastRun = j.last_run ? relTime(j.last_run) : "never";
           const dur = j.last_duration_ms ? Math.round(j.last_duration_ms / 1000) + "s" : "";
