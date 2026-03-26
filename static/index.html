@@ -932,6 +932,74 @@
     .alert-bar.visible {
       display: flex;
     }
+
+    /* ── Pulse animation on active agent dots ── */
+    @keyframes pulse-active {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(45,186,90,0.6); }
+      50% { box-shadow: 0 0 0 4px rgba(45,186,90,0); }
+    }
+    .status-active { animation: pulse-active 2s ease-in-out infinite; }
+    .agent-status-dot.status-active { animation: pulse-active 2s ease-in-out infinite; }
+
+    /* ── Panel hover glow ── */
+    .panel { transition: box-shadow 0.2s ease; }
+    .panel:hover { box-shadow: 0 0 0 1px var(--border-mid), 0 4px 20px rgba(0,0,0,0.3); }
+    #agents:hover    { box-shadow: 0 0 0 1px rgba(45,186,90,0.25), 0 4px 16px rgba(45,186,90,0.06); }
+    #system-mac:hover { box-shadow: 0 0 0 1px rgba(77,159,255,0.25), 0 4px 16px rgba(77,159,255,0.06); }
+    #crons:hover     { box-shadow: 0 0 0 1px rgba(227,179,65,0.25), 0 4px 16px rgba(227,179,65,0.06); }
+    #usage:hover     { box-shadow: 0 0 0 1px rgba(74,92,117,0.25), 0 4px 16px rgba(74,92,117,0.06); }
+    #system-hetzner:hover { box-shadow: 0 0 0 1px rgba(45,186,90,0.25), 0 4px 16px rgba(45,186,90,0.06); }
+
+    /* ── Active agent card highlight ── */
+    .agent-card-active { background: rgba(45,186,90,0.04) !important; border-color: rgba(45,186,90,0.25) !important; }
+
+    /* ── Container 2-column grid ── */
+    .containers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .container-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      font-size: 10px;
+      min-width: 0;
+    }
+    .container-cell-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: var(--font-mono);
+    }
+    .container-cell-uptime {
+      font-size: 9px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+
+    /* ── Refresh pulse dot ── */
+    #refresh-pulse {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+    #refresh-pulse.flash {
+      opacity: 1;
+      animation: pulse-fade 2s ease-out forwards;
+    }
+    @keyframes pulse-fade {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -941,6 +1009,8 @@
         <div class="logo"><span class="logo-icon">⬡</span> OpsDash <span class="logo-badge">LIVE</span></div>
       </div>
       <div class="header-right">
+        <span id="refresh-pulse"></span>
+        <span id="live-clock" class="mono" style="font-size:11px;color:var(--muted);letter-spacing:0.05em;"></span>
         <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
         <div id="status" class="mono">Loading…</div>
       </div>
@@ -950,7 +1020,7 @@
     <main class="dashboard-grid">
       <section class="panel" id="kanban">
         <div class="panel-header">
-          <span>Kanban</span>
+          <span>Kanban <span id="kanban-total-count" class="panel-count mono" style="display:none"></span></span>
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="done-badge" id="done-badge">
               ✓ Done <span class="done-badge-count" id="done-badge-count">0</span>
@@ -1157,6 +1227,11 @@
 
       document.getElementById("board-root").innerHTML = `<div class="board">${html}</div>`;
 
+      // Update kanban total count badge
+      const totalCount = filtered.length;
+      const ktcEl = document.getElementById("kanban-total-count");
+      if(ktcEl){ktcEl.textContent=totalCount+" issues";ktcEl.style.display="";}
+
       // Show done badge (visible without scrolling) — click to scroll to Done column
       const doneCount = byCol["done"].length;
       const doneBadge = document.getElementById("done-badge");
@@ -1288,8 +1363,9 @@
       const model = a.model ? `<div class="agent-model">${escHtml(a.model.replace("anthropic/",""))}</div>` : "";
       const ws = a.workspace ? `<div class="agent-workspace" title="${escHtml(a.workspace)}">${escHtml(shortWorkspace(a.workspace))}</div>` : "";
       const statusLabel = a.status ? `<span class="agent-status-label agent-status-${escHtml(a.status)}">${escHtml(a.status)}</span>` : "";
+      const activeClass = a.status === "active" ? " agent-card-active" : "";
       return `
-        <div class="agent-card">
+        <div class="agent-card${activeClass}">
           ${emoji}
           <div class="agent-info">
             <div class="agent-name-row">${dot}<span class="agent-name">${name}</span>${statusLabel}${lastSeen}</div>
@@ -1470,20 +1546,17 @@
       labelEl.textContent = `${containers.length} container${containers.length !== 1 ? "s" : ""}`;
       const rows = containers.map(c => {
         const name = c.Names || c.Name || c.ID || "?";
-        const image = c.Image || "";
         const status = (c.Status || c.State || "").toLowerCase();
-        const dotColor = status.includes("up") || status.includes("running")
-          ? "#3fb950" : "#f85149";
+        const dotColor = status.includes("up") || status.includes("running") ? "#3fb950" : "#f85149";
         const startedAt = c.StartedAt || "";
         const uptime = startedAt ? relTime(startedAt) : "";
-        return `
-          <div class="container-row">
-            <span class="container-dot" style="background:${dotColor}"></span>
-            <span class="container-name">${escHtml(name)}</span>
-            <span class="container-uptime">${escHtml(uptime)}</span>
-          </div>`;
+        return `<div class="container-cell">
+          <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
+          <span class="container-cell-name">${escHtml(name)}</span>
+          <span class="container-cell-uptime">${escHtml(uptime)}</span>
+        </div>`;
       }).join("");
-      rootEl.innerHTML = `<div class="containers-label">Running containers</div>${rows}`;
+      rootEl.innerHTML = `<div class="containers-label">Running containers</div><div class="containers-grid">${rows}</div>`;
     }
 
     function checkAlerts(server) {
@@ -1744,7 +1817,12 @@
       loadSystem();
       loadCrons();
       loadUsage();
+      setTimeout(()=>{const p=document.getElementById("refresh-pulse");if(p){p.className="flash";setTimeout(()=>{p.className=""},2000);}}, 500);
     }
+
+    // Live clock
+    function updateClock() { const n = new Date(); document.getElementById("live-clock").textContent = n.toTimeString().slice(0,8); }
+    setInterval(updateClock, 1000); updateClock();
 
     // Initial load
     document.getElementById("board-root").innerHTML =
