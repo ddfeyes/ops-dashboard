@@ -37,3 +37,20 @@ def test_system_returns_expected_keys():
     data = r.json()
     assert "mac" in data
     assert "hetzner" in data
+
+
+def test_usage_returns_expected_keys():
+    """Usage endpoint must return session/weekly token stats and source."""
+    r = client.get("/api/usage")
+    assert r.status_code == 200
+    data = r.json()
+    assert "current_session" in data
+    assert "weekly_all" in data
+    assert "source" in data
+
+
+def test_crons_returns_list():
+    """Crons endpoint must return a JSON list (may be empty in test env)."""
+    r = client.get("/api/crons")
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
