@@ -761,6 +761,8 @@
     .cron-name { font-weight: 500; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cron-agent { font-size: 11px; color: var(--muted); }
     .cron-meta { font-size: 11px; color: var(--muted); font-family: "JetBrains Mono", Consolas, monospace; margin-left: auto; flex-shrink: 0; }
+    .cron-dur-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .cron-dur-bar { height: 100%; border-radius: 2px; transition: width 0.3s ease; }
     .cron-err-badge { background: rgba(248,81,73,0.18); color: #f85149; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; margin-left: 6px; }
 
     /* ── System Metrics ── */
@@ -1832,11 +1834,20 @@
           const errBadge = j.consecutive_errors > 0 ? `<span class="cron-err-badge">${j.consecutive_errors} err</span>` : "";
           const errSeg = j.consecutive_errors > 0 ? ` · × ${j.consecutive_errors} errors` : "";
           const rowStyle = j.consecutive_errors > 0 ? ` style="background:rgba(248,81,73,0.06)"` : "";
+                    // Duration bar
+          let durBarHtml = "";
+          if (j.last_duration_ms && j.interval_min) {
+            const intervalMs = j.interval_min * 60 * 1000;
+            const pct = Math.min(100, Math.round(j.last_duration_ms / intervalMs * 100));
+            const barColor = pct > 80 ? "var(--red)" : pct > 50 ? "var(--yellow)" : "var(--green)";
+            durBarHtml = `<div class="cron-dur-bar-wrap"><div class="cron-dur-bar" style="width:${pct}%;background:${barColor}" title="${dur} / ${j.interval_min}m (${pct}%)"></div></div>`;
+          }
           return `<div class="cron-row"${rowStyle}>
             <span class="cron-dot" style="background:${dotColor}"></span>
             <div style="flex:1;min-width:0">
               <div class="cron-name">${escHtml(j.name)}${errBadge}</div>
               <div class="cron-agent">${escHtml(j.agent)} · ${escHtml(interval)}</div>
+              ${durBarHtml}
             </div>
             <div class="cron-meta">${escHtml(lastRun)}${dur ? " · " + escHtml(dur) : ""}${errSeg} · ${escHtml(nextStr)}</div>
           </div>`;
