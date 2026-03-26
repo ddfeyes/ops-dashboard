@@ -198,3 +198,11 @@
 - Hetzner server has no OpenClaw installed → can't mount ~/.openclaw from container
 - Session status must be pre-computed locally and pushed as env var to Hetzner
 - openclaw.json agents.list is authoritative; docker-compose OPENCLAW_AGENTS_JSON was stale
+
+## Cycle 2026-03-26 — Kanban search/filter bar (Issue #129, PR #130)
+- Added `<input id="kanban-search">` in kanban panel header (🔍 filter… placeholder)
+- Filters cards by title or issue id substring match (case-insensitive)
+- `×` clear button appears when input has text
+- `searchQuery` state var in JS; compounds with existing `activeRepo` filter
+- No backend changes — pure frontend JS
+- Deployed and verified: health ok, 10 agents, 21 containers
