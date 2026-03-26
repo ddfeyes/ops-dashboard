@@ -1632,6 +1632,7 @@
       // Group containers by project prefix (first segment before '-' or '_')
       function containerPrefix(name) {
         // Special cases: keep multi-word prefixes together
+        if (name.startsWith("ops-dashboard")) return "ops-dashboard";
         if (name.startsWith("mm-dashboard")) return "mm-dashboard";
         if (name.startsWith("tg-")) return "tg-bots";
         if (name.startsWith("trading_bot")) return "trading";
