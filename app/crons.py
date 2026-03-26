@@ -23,6 +23,13 @@ def get_crons() -> list[dict[str, Any]]:
             sched = j.get("schedule", {})
             interval_ms = sched.get("everyMs", 0)
             interval_min = round(interval_ms / 60000) if interval_ms else None
+            # Also try cron expression parsing (schedule.kind=="cron" uses expr)
+            cron_expr = sched.get("expr", "")
+            if not interval_min and cron_expr:
+                import re
+                m = re.match(r"^\*/(\d+)\s+\*", cron_expr)
+                if m:
+                    interval_min = int(m.group(1))
             last_run_ms = state.get("lastRunAtMs", 0)
             next_run_ms = state.get("nextRunAtMs", 0)
             last_run_iso = (
@@ -47,6 +54,7 @@ def get_crons() -> list[dict[str, Any]]:
                     "last_status": state.get("lastRunStatus", "unknown"),
                     "last_duration_ms": state.get("lastDurationMs", 0),
                     "consecutive_errors": state.get("consecutiveErrors", 0),
+                    "schedule_expr": sched.get("expr", ""),
                 }
             )
         # Sort by last_run descending (most recent first)
