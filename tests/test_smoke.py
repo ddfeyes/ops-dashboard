@@ -54,3 +54,13 @@ def test_crons_returns_list():
     r = client.get("/api/crons")
     assert r.status_code == 200
     assert isinstance(r.json(), list)
+
+
+def test_containers_returns_expected_keys():
+    """Containers endpoint must return containers list and available flag."""
+    r = client.get("/api/containers")
+    assert r.status_code == 200
+    data = r.json()
+    assert "containers" in data
+    assert "available" in data
+    assert isinstance(data["containers"], list)
