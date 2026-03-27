@@ -114,19 +114,27 @@ def _get_docker_containers() -> tuple[list[dict[str, Any]], bool]:
     # Try Docker SDK first (uses /var/run/docker.sock — preferred inside containers)
     try:
         import docker as docker_sdk  # type: ignore
+        from docker.errors import ImageNotFound  # type: ignore
         client = docker_sdk.DockerClient(base_url="unix:///var/run/docker.sock", timeout=8)
         containers = client.containers.list()
         result = []
         for c in containers:
             started_at = ""
+            image_name = ""
             try:
                 started_at = c.attrs.get("State", {}).get("StartedAt", "")
             except Exception:
                 pass
+            try:
+                image_name = c.image.tags[0] if c.image.tags else (c.image.short_id or "")
+            except ImageNotFound:
+                image_name = c.image.short_id or ""
+            except Exception:
+                image_name = ""
             result.append({
                 "ID": c.short_id,
                 "Names": c.name,
-                "Image": c.image.tags[0] if c.image.tags else (c.image.short_id or ""),
+                "Image": image_name,
                 "Status": c.status,
                 "State": c.status,
                 "StartedAt": started_at,
