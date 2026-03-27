@@ -1919,17 +1919,15 @@
       const resetIso  = (data.reset_times || {}).weekly || "";
       const byModel   = weekly.by_model || {};
 
-      // All-zeros / no-data detection — also guard against 0% bars (gray track showing through)
-      const hasSession = sess.total_tokens > 0 || (sessPct > 0.1);
-      const hasWeekly  = weekly.total_tokens > 0 || (wkAllPct > 0.1);
+      // All-zeros / no-data detection — guard against 0% bars (gray track showing through)
+      // pct can be 0 if limit is 0/missing; in that case treat as no data
+      const hasSession = sess.total_tokens > 0 && sessPct > 0.1;
+      const hasWeekly  = weekly.total_tokens > 0 && wkAllPct > 0.1;
       const allZero   = !hasSession && !hasWeekly;
 
       if (allZero) {
-        // Wipe first so any residual .metric-bar-wrap backgrounds can't bleed through
-        rootEl.textContent = "";
-        rootEl.style.cssText = "display:flex;align-items:center;justify-content:center;min-height:140px;";
         rootEl.innerHTML = `
-          <div class="empty-state" style="position:relative;">
+          <div class="empty-state">
             <div class="empty-state-icon">📊</div>
             <div>No usage data available</div>
             <div class="empty-state-detail">
