@@ -119,16 +119,19 @@ def _get_docker_containers() -> tuple[list[dict[str, Any]], bool]:
         containers = client.containers.list()
         result = []
         for c in containers:
-            started_at = ""
-            image_name = ""
+            # docker-py 7.x: c.attrs triggers lazy-load of image metadata.
+            # If the container references a missing image, ImageNotFound is raised
+            # from inside c.attrs.__getattr__ → propagates out of .get() call.
             try:
                 started_at = c.attrs.get("State", {}).get("StartedAt", "")
+            except ImageNotFound:
+                started_at = ""
             except Exception:
-                pass
+                started_at = ""
             try:
                 image_name = c.image.tags[0] if c.image.tags else (c.image.short_id or "")
             except ImageNotFound:
-                image_name = c.image.short_id or ""
+                image_name = c.short_id
             except Exception:
                 image_name = ""
             result.append({
