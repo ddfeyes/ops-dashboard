@@ -144,7 +144,9 @@ def _get_docker_containers() -> tuple[list[dict[str, Any]], bool]:
             })
         client.close()
         return result, True
-    except Exception:
+    except Exception as e:
+        import sys
+        print(f"DOCKER_SDK_ERR: {type(e).__name__}: {e}", file=sys.stderr)
         pass
 
     # Fallback: docker CLI
