@@ -175,6 +175,17 @@ async def usage() -> dict[str, Any]:
     return await loop.run_in_executor(_executor, get_usage)
 
 
+@app.get("/api/containers")
+async def containers() -> dict[str, Any]:
+    """Return Docker containers list (from same cached system data as /api/system)."""
+    loop = asyncio.get_running_loop()
+    try:
+        server = await loop.run_in_executor(_executor, get_server_metrics)
+        return {"containers": server.get("containers", []), "available": server.get("docker_available", False)}
+    except Exception as e:
+        return {"containers": [], "available": False, "error": str(e)}
+
+
 @app.get("/api/crons")
 async def crons() -> list[dict[str, Any]]:
     """Return OpenClaw cron job status."""
