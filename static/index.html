@@ -249,6 +249,15 @@
     .done-expand-btn:hover { background: rgba(63,185,80,0.16); }
     .done-expand-collapse { color: var(--muted); background: transparent; border-color: var(--border); }
     .done-expand-collapse:hover { background: var(--surface-raised); }
+    /* Done column age footer */
+    .done-age-footer {
+      padding: 4px 12px 6px;
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-family: var(--font-mono);
+    }
     /* #board-root is injected by JS inside .board-wrapper — must also flex so .board inherits height */
     #board-root {
       display: flex;
@@ -1313,6 +1322,7 @@
 
     function renderBoard(cards) {
       renderToolbar(cards);
+      let doneAgeLabel = "";
       const q = searchQuery.trim().toLowerCase();
       const filtered = cards
         .filter(c => activeRepo === "all" || c.id.startsWith(activeRepo + "#") || c.id.startsWith(activeRepo + "/"))
@@ -1324,6 +1334,26 @@
         const col = card.column in byCol ? card.column : "backlog";
         byCol[col].push(card);
       });
+
+      // Compute done column age indicator after byCol is built
+      {
+        const dc = byCol["done"];
+        if (dc.length > 0) {
+          const nowMs = Date.now();
+          let oldestTs = null;
+          for (const c of dc) {
+            if (c.timestamp) {
+              const ts = new Date(c.timestamp).getTime();
+              if (oldestTs === null || ts < oldestTs) oldestTs = ts;
+            }
+          }
+          if (oldestTs !== null) {
+            const oldestDays = Math.floor((nowMs - oldestTs) / 86400000);
+            const old7d = dc.filter(c => c.timestamp && (nowMs - new Date(c.timestamp).getTime()) > 7 * 86400000).length;
+            doneAgeLabel = old7d > 0 ? `oldest ${oldestDays}d · ${old7d} >7d` : `oldest ${oldestDays}d`;
+          }
+        }
+      }
 
       const html = COLUMNS.filter(col => col.key === "backlog" || byCol[col.key].length > 0).map(col => {
         const colCards = byCol[col.key];
