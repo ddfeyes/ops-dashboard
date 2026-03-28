@@ -5,6 +5,12 @@
 - docker exec gateway-nginx nginx -t before nginx -s reload
 - message tool unavailable in cron context — use exec curl Bot API
 
+## 2026-03-28 — Container restart count badge (Issue #165)
+- Backend: added `RestartCount` to container data from Docker SDK c.attrs.get("RestartCount", 0)
+- Frontend: shows ↺N badge only when restart_count > 0; hidden when 0 (clean)
+- bananas31-frontend currently shows ↺53 — high restart count, worth investigating
+- Tooltip on hover: "Restart count"
+
 ## 2026-03-28 — Done cards older than 7 days get visual marker (Issue #164)
 - Done cards with timestamp >7 days old: opacity:0.55 + strikethrough on title
 - Makes the done column scannable — stale items visually distinct at a glance
