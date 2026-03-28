@@ -51,6 +51,11 @@
 - `docker ps --format '{{.Names}} {{.Status}}'` — parse health from Status field
 - Frontend: no change (health endpoint was for backend/API use)
 
+## 2026-03-28 — Cron panel summary row (Issue #174)
+- Added summary row at top of crons panel: "N crons · X errors · next HH:MM"
+- Shows total count, error count (red when >0), and next fire time
+- Monospace font, subtle separator line from the rest of the list
+
 ## 2026-03-28 — Kanban sort control (Issue #173)
 - Added sort dropdown to kanban toolbar: "newest" (default) or "oldest" — sorts by card created_at timestamp
 - Purely frontend sort — no backend changes needed, instant response
