@@ -5,6 +5,11 @@
 - docker exec gateway-nginx nginx -t before nginx -s reload
 - message tool unavailable in cron context — use exec curl Bot API
 
+## 2026-03-28 — /api/kanban returns {cards,total} (Issue #161)
+- Changed return type from `list[dict]` to `dict{cards,total}`
+- Badge now shows "5/148 issues" when filtered, "148 issues" when showing all
+- Frontend handles both old (array) and new (dict) formats for backward compat
+
 ## 2026-03-28 — Kanban Done count X/Y in header (Issue #160)
 - Done column header shows 'DONE 10/143' when collapsed (10 visible of 143 total)
 - Shows 'DONE 143' when expanded — clear UX improvement

@@ -12,3 +12,4 @@
 - [x] P2: health endpoint shows unhealthy containers (issue #158) — fixed 2026-03-28
 - [x] P3: kanban toolbar repo counts (issue #159) — fixed 2026-03-28
 - [x] P3: kanban Done column header shows X/Y count when collapsed (issue #160) — fixed 2026-03-28
+- [x] P3: /api/kanban returns {cards,total} with filtered count badge (issue #161) — fixed 2026-03-28
