@@ -51,4 +51,11 @@
 - `docker ps --format '{{.Names}} {{.Status}}'` — parse health from Status field
 - Frontend: no change (health endpoint was for backend/API use)
 
+## 2026-03-28 — Container search/filter bar (Issue #168)
+- Added search input to containers panel body (🔍 filter containers… placeholder)
+- Filters container list by name in real-time as user types
+- Shows "X of 27" count when filtered; "no match" empty state if none match
+- Uses separate #container-list-root innerHTML target to preserve search bar on re-render
+- Container search state stored in `containerSearch` global var; lastServerData cached for re-filter
+
 ## 2026-03-28 — Network I/O rate (Issue #157)
