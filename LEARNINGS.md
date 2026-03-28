@@ -5,6 +5,11 @@
 - docker exec gateway-nginx nginx -t before nginx -s reload
 - message tool unavailable in cron context — use exec curl Bot API
 
+## 2026-03-28 — Kanban Done count X/Y in header (Issue #160)
+- Done column header shows 'DONE 10/143' when collapsed (10 visible of 143 total)
+- Shows 'DONE 143' when expanded — clear UX improvement
+- Previously showed just 'DONE 143' even when only 10 visible (misleading)
+
 ## 2026-03-28 — Kanban toolbar repo counts (Issue #159)
 - Toolbar filter buttons now show card counts next to each repo name
 - 'triangle (12)' 'ops-dashboard (5)' 'All repos (148)'

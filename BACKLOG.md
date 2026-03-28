@@ -11,3 +11,4 @@
 - [x] P2: network I/O as rate not cumulative bytes (issue #157) — fixed 2026-03-28
 - [x] P2: health endpoint shows unhealthy containers (issue #158) — fixed 2026-03-28
 - [x] P3: kanban toolbar repo counts (issue #159) — fixed 2026-03-28
+- [x] P3: kanban Done column header shows X/Y count when collapsed (issue #160) — fixed 2026-03-28
