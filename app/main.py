@@ -162,7 +162,6 @@ async def system_metrics() -> dict[str, Any]:
         "hetzner": server,
         "hetzner_error": server_error,
         "local": local,
-        "mac": server,  # legacy key
         "mac_remote": mac,
         "mac_remote_error": mac_error,
     }

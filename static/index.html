@@ -126,7 +126,7 @@
     .scroll-fade.visible { opacity: 1; }
 
     /* Hetzner Server: row 2 right */
-    #system-mac { grid-column: 2; grid-row: 2; }
+    #system-server { grid-column: 2; grid-row: 2; }
 
     /* Local Machine: row 3 left */
     #system-local { grid-column: 1; grid-row: 3; }
@@ -952,7 +952,7 @@
       /* Reset all column/row placements to natural stacking order */
       #kanban       { grid-column: 1; grid-row: auto; }
       #agents       { grid-column: 1; grid-row: auto; }
-      #system-mac   { grid-column: 1; grid-row: auto; }
+      #system-server { grid-column: 1; grid-row: auto; }
       #system-local { grid-column: 1; grid-row: auto; }
       #crons        { grid-column: 1; grid-row: auto; }
       #usage        { grid-column: 1; grid-row: auto; }
@@ -996,7 +996,7 @@
     .panel { transition: box-shadow 0.2s ease; }
     .panel:hover { box-shadow: 0 0 0 1px var(--border-mid), 0 4px 20px rgba(0,0,0,0.3); }
     #agents:hover    { box-shadow: 0 0 0 1px rgba(45,186,90,0.25), 0 4px 16px rgba(45,186,90,0.06); }
-    #system-mac:hover { box-shadow: 0 0 0 1px rgba(77,159,255,0.25), 0 4px 16px rgba(77,159,255,0.06); }
+    #system-server:hover { box-shadow: 0 0 0 1px rgba(77,159,255,0.25), 0 4px 16px rgba(77,159,255,0.06); }
     #crons:hover     { box-shadow: 0 0 0 1px rgba(227,179,65,0.25), 0 4px 16px rgba(227,179,65,0.06); }
     #usage:hover     { box-shadow: 0 0 0 1px rgba(74,92,117,0.25), 0 4px 16px rgba(74,92,117,0.06); }
     #system-hetzner:hover { box-shadow: 0 0 0 1px rgba(45,186,90,0.25), 0 4px 16px rgba(45,186,90,0.06); }
@@ -1155,7 +1155,7 @@
         <div class="scroll-fade" id="agents-scroll-fade"></div>
       </section>
 
-      <section class="panel" id="system-mac">
+      <section class="panel" id="system-server">
         <div class="panel-header">
           <span>Hetzner Server</span>
           <span class="panel-count mono" id="mac-label">live</span>
