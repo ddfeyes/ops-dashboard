@@ -24,3 +24,4 @@
 - [x] P3: container image tooltip on hover (issue #170) — fixed 2026-03-28
 - [x] P3: kanban keyboard shortcuts: / to focus, Esc to clear (issue #171) — fixed 2026-03-28
 - [x] P3: high-restart container rows get red left border + tinted background (issue #172) — fixed 2026-03-28
+- [x] P3: kanban sort by newest/oldest via toolbar dropdown (issue #173) — fixed 2026-03-28
