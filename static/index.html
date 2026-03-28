@@ -2031,7 +2031,7 @@
           } else if (nextRunMs > 5000) {
             nextStr = "▶ in " + Math.round(nextRunMs / 60000) + "m";
           } else if (nextRunMs < -5000) {
-            nextStr = "<span class='cron-late'>☓ " + Math.round(Math.abs(nextRunMs) / 60000) + "m LATE</span>";
+            nextStr = "<span class='cron-late'>☓ " + Math.max(1, Math.round(Math.abs(nextRunMs) / 60000)) + "m LATE</span>";
           } else {
             nextStr = "▶ now";
           }
