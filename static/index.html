@@ -1279,6 +1279,24 @@
     let countdown = 30;
     let doneExpanded = false;
     const DONE_PREVIEW = 10;
+    const KBCACHE_KEY = 'opsdash_kanban';
+    const KBCACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+    // ── Kanban localStorage cache ──────────────────────────────────
+    function saveKanbanCache(raw) {
+      try {
+        localStorage.setItem(KBCACHE_KEY, JSON.stringify({ raw, ts: Date.now() }));
+      } catch(_) {}
+    }
+    function loadKanbanCache() {
+      try {
+        const raw = localStorage.getItem(KBCACHE_KEY);
+        if (!raw) return null;
+        const { raw: r, ts } = JSON.parse(raw);
+        if (Date.now() - ts > KBCACHE_TTL) return null;
+        return r;
+      } catch(_) { return null; }
+    }
 
     // "/" focuses the kanban search; "Escape" clears it (handled on the input itself)
     document.addEventListener('keydown', (e) => {
@@ -1482,17 +1500,32 @@
 
     async function loadKanban() {
       clearInterval(refreshTimer);
+
+      // On initial load, try to render from cache immediately (eliminates spinner flash)
+      const initial = allCards.length === 0;
+      if (initial) {
+        const cached = loadKanbanCache();
+        if (cached) {
+          allCards = Array.isArray(cached) ? cached : (cached && Array.isArray(cached.cards) ? cached.cards : []);
+          kanbanTotal = (cached && typeof cached === "object" && !Array.isArray(cached)) ? (cached.total || allCards.length) : allCards.length;
+          renderBoard(allCards);
+        }
+      }
+
       const btn = document.getElementById("refresh-btn");
       const status = document.getElementById("status");
 
       btn.disabled = true;
-      status.textContent = "Fetching…";
-      status.className = "";
+      if (!initial || allCards.length === 0) {
+        status.textContent = "Fetching…";
+        status.className = "";
+      }
 
       try {
         const res = await fetch("/api/kanban");
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const raw = await res.json();
+        saveKanbanCache(raw);
         allCards = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.cards) ? raw.cards : []);
         kanbanTotal = (raw && typeof raw === "object" && !Array.isArray(raw)) ? (raw.total || allCards.length) : allCards.length;
         renderBoard(allCards);
@@ -1512,8 +1545,10 @@
         }, 1000);
 
       } catch (err) {
-        document.getElementById("board-root").innerHTML =
-          `<div class="error-box"><strong>Failed to load kanban data</strong>${escHtml(err.message)}</div>`;
+        if (allCards.length === 0) {
+          document.getElementById("board-root").innerHTML =
+            `<div class="error-box"><strong>Failed to load kanban data</strong>${escHtml(err.message)}</div>`;
+        }
         status.textContent = "Error — retrying in 30s";
         status.className = "error";
         countdown = 30;
@@ -2289,8 +2324,6 @@
     setTimeout(setupContainerSearch, 300);
 
     // Initial load
-    document.getElementById("board-root").innerHTML =
-      `<div class="loading-overlay"><div class="spinner"></div><span>Loading kanban…</span></div>`;
     loadVersion().then(loadAll);
 
     // Refresh all panels every 30s
