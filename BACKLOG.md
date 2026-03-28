@@ -26,3 +26,4 @@
 - [x] P3: high-restart container rows get red left border + tinted background (issue #172) — fixed 2026-03-28
 - [x] P3: kanban sort by newest/oldest via toolbar dropdown (issue #173) — fixed 2026-03-28
 - [x] P3: crons panel shows summary row with count, errors, next fire time (issue #174) — fixed 2026-03-28
+- [x] P3: kanban sort dropdown had no keyboard focus ring (issue #175) — fixed 2026-03-28

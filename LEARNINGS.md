@@ -56,6 +56,11 @@
 - Shows total count, error count (red when >0), and next fire time
 - Monospace font, subtle separator line from the rest of the list
 
+## 2026-03-28 — Kanban sort dropdown focus ring (Issue #175)
+- Sort dropdown (#sort-select) had outline:none inline — no keyboard focus indicator
+- Removed outline:none from inline style; added #sort-select:focus CSS with 2px accent outline
+- Fixes keyboard accessibility for the sort control
+
 ## 2026-03-28 — Kanban sort control (Issue #173)
 - Added sort dropdown to kanban toolbar: "newest" (default) or "oldest" — sorts by card created_at timestamp
 - Purely frontend sort — no backend changes needed, instant response
