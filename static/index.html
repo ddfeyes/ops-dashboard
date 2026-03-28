@@ -1338,11 +1338,14 @@
         const cardsHtml = visibleCards.length
           ? visibleCards.map(cardHtml).join("")
           : `<div class="empty-col">No items</div>`;
+        const countLabel = col.key === "done" && colCards.length > DONE_PREVIEW && !doneExpanded
+          ? `${visibleCards.length}/${colCards.length}`
+          : `${colCards.length}`;
         return `
           <div class="column col-${col.key}">
             <div class="col-header">
               <span>${col.label}</span>
-              <span class="col-count">${colCards.length}</span>
+              <span class="col-count">${countLabel}</span>
             </div>
             <div class="col-cards">${cardsHtml}${expandToggle}</div>
           </div>`;
