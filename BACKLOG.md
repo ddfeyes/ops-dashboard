@@ -4,7 +4,7 @@
 
 ## Active
 - [x] P2: docker.containers=0 в health endpoint — fixed 2026-03-24 (теперь показывает 27)
-- [ ] P3: agent last_seen timestamps (issue #29)
+- [x] P3: agent last_seen timestamps (issue #29) — fixed 2026-03-24 (already implemented)
 
 ## Ideas (агент пополняет)
 - [x] P2: misleading 'mac' key duplicate in /api/system (issue #156) — fixed 2026-03-28
