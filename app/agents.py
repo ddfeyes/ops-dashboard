@@ -54,7 +54,7 @@ _WORKSPACE_PREFIX_FROM = os.getenv("OPENCLAW_WORKSPACE_PREFIX_FROM", "")
 _WORKSPACE_PREFIX_TO = os.getenv("OPENCLAW_WORKSPACE_PREFIX_TO", "")
 
 # Active threshold: sessions active within this many seconds are "active"
-_ACTIVE_THRESHOLD_SECS = 300  # 5 minutes
+_ACTIVE_THRESHOLD_SECS = 900  # 15 minutes
 
 # Offline threshold: workspaces not modified within this many seconds are "offline"
 # (beyond idle — considered very stale)
@@ -185,7 +185,13 @@ def _fetch_gateway_sessions() -> dict[str, dict]:
                             if updated_ms > best_ms:
                                 best_ms = updated_ms
                     if best_ms > 0:
-                        status = "active" if (now_ms - best_ms) < _ACTIVE_THRESHOLD_SECS * 1000 else "idle"
+                        age_ms = now_ms - best_ms
+                        if age_ms < _ACTIVE_THRESHOLD_SECS * 1000:
+                            status = "active"
+                        elif age_ms < _OFFLINE_THRESHOLD_SECS * 1000:
+                            status = "idle"
+                        else:
+                            status = "offline"
                         by_agent[agent_id] = {
                             "status": status,
                             "last_seen_iso": _ms_to_iso(best_ms),
@@ -217,7 +223,13 @@ def _fetch_gateway_sessions() -> dict[str, dict]:
                 last_active_ms = s.get("lastActiveAt") or s.get("last_active_at") or s.get("updatedAt") or 0
                 if not last_active_ms:
                     last_active_ms = s.get("createdAt") or 0
-                status = "active" if (now_ms - last_active_ms) < _ACTIVE_THRESHOLD_SECS * 1000 else "idle"
+                age_ms = now_ms - last_active_ms
+                if age_ms < _ACTIVE_THRESHOLD_SECS * 1000:
+                    status = "active"
+                elif age_ms < _OFFLINE_THRESHOLD_SECS * 1000:
+                    status = "idle"
+                else:
+                    status = "offline"
                 existing = by_agent.get(short_id)
                 if existing is None or last_active_ms > (existing.get("_last_ms") or 0):
                     by_agent[short_id] = {
