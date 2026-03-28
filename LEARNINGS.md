@@ -5,6 +5,12 @@
 - docker exec gateway-nginx nginx -t before nginx -s reload
 - message tool unavailable in cron context — use exec curl Bot API
 
+## 2026-03-28 — Health endpoint: unhealthy containers (Issue #158)
+- Health endpoint showed container count but not WHICH containers were unhealthy
+- Fixed: added `checks.docker.unhealthy` list — name+status for any container not in 'running'/'up' state
+- When unhealthy containers exist, overall health status becomes 'degraded'
+- All 27 containers currently healthy — no unhealthy field shown
+
 ## 2026-03-28 — Network I/O rate (Issue #157)
 - Cumulative bytes_sent/bytes_recv since boot — not actionable for monitoring
 - Fixed: track previous poll values + monotonic time, compute sent_rate/recv_rate in bytes/sec
