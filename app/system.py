@@ -76,8 +76,8 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
 
     # Compute network I/O rate
     now = time.monotonic()
-    sent_rate = 0.0
-    recv_rate = 0.0
+    sent_rate = None
+    recv_rate = None
     if _network_rate is not None:
         prev_sent, prev_recv, prev_time = _network_rate
         elapsed = now - prev_time
@@ -107,8 +107,8 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
         "network": {
             "bytes_sent": net.bytes_sent,
             "bytes_recv": net.bytes_recv,
-            "sent_rate": int(sent_rate),
-            "recv_rate": int(recv_rate),
+            "sent_rate": int(sent_rate) if sent_rate is not None else None,
+            "recv_rate": int(recv_rate) if recv_rate is not None else None,
         },
         "uptime_seconds": int(time.time() - boot_time),
         "load_avg": {
