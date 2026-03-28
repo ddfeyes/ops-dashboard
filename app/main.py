@@ -18,6 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from app.agents import get_ao_sessions, get_openclaw_agents
 from app.crons import get_crons
 from app.kanban import fetch_kanban_cards
+from app.quotas import get_quotas
 from app.system import get_hetzner_metrics, get_local_machine_metrics, get_mac_metrics, get_server_metrics
 from app.usage import get_usage
 
@@ -188,6 +189,13 @@ async def usage() -> dict[str, Any]:
     """Return Anthropic API usage from local Claude Code session logs."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(_executor, get_usage)
+
+
+@app.get("/api/quotas")
+async def quotas() -> dict[str, Any]:
+    """Return Claude/OpenRouter API quota usage."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(_executor, get_quotas)
 
 
 @app.get("/api/containers")

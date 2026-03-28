@@ -2262,12 +2262,43 @@
       }
     }
 
+    async function loadQuotas() {
+      try {
+        const res = await fetch("/api/quotas");
+        if (!res.ok) return;
+        const data = await res.json();
+        const anthropic = data.anthropic || {};
+        const q5h = anthropic["5h"] || {};
+        const q7d = anthropic["7d"] || {};
+        const pct5h = q5h.pct;
+        const pct7d = q7d.pct;
+
+        // Check if any quota > 80% and show alert banner
+        const high5h = pct5h != null && pct5h > 80;
+        const high7d = pct7d != null && pct7d > 80;
+        const bar = document.getElementById("alert-bar");
+        if (!bar) return;
+        if (high5h || high7d) {
+          const parts = [];
+          if (high5h) parts.push("5h: " + pct5h.toFixed(0) + "%");
+          if (high7d) parts.push("7d: " + pct7d.toFixed(0) + "%");
+          bar.innerHTML = "⚠ QUOTA ALERT — Claude " + parts.join(" · ") + " — agent blackout risk";
+          bar.style.background = pct7d > 90 ? "#2d0606" : "#2d1e00";
+          bar.style.color = pct7d > 90 ? "#f85149" : "#e3b341";
+          bar.classList.add("visible");
+        } else {
+          bar.classList.remove("visible");
+        }
+      } catch(_) {}
+    }
+
     function loadAll() {
       loadKanban();
       loadAgents();
       loadSystem();
       loadCrons();
       loadUsage();
+      loadQuotas();
       setTimeout(()=>{const p=document.getElementById("refresh-pulse");if(p){p.className="flash";setTimeout(()=>{p.className=""},2000);}}, 500);
     }
 
@@ -2331,6 +2362,7 @@
     setInterval(loadSystem, 30000);
     setInterval(loadCrons, 60000);
     setInterval(loadUsage, 30000);
+    setInterval(loadQuotas, 300000); // quotas refresh every 5 min
   </script>
 </body>
 </html>
