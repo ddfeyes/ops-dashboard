@@ -1611,7 +1611,7 @@
       const _net = server.network || {};
       if (_net.bytes_sent != null) {
         const _fb = b => b > 1073741824 ? (b/1073741824).toFixed(1)+"GB" : b > 1048576 ? (b/1048576).toFixed(0)+"MB" : (b/1024).toFixed(0)+"KB";
-        _compactItems.push(["NET ↑↓", _fb(_net.bytes_sent)+" / "+_fb(_net.bytes_recv), "muted"]);
+        _compactItems.push(["NET ↑↓", _fb(_net.sent_rate)+"/s↑ "+_fb(_net.recv_rate)+"/s↓", "muted"]);
       }
 
       if (server.uptime_seconds != null) {

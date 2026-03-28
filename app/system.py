@@ -27,6 +27,9 @@ _metrics_cache_time: float = 0.0
 _metrics_cache_lock = threading.Lock()
 _METRICS_TTL: float = 10.0
 
+# Network rate tracking: previous (bytes_sent, bytes_recv, monotonic_time)
+_network_rate: tuple[float, float, float] | None = None
+
 
 # ---------------------------------------------------------------------------
 # Local server metrics (runs wherever the container is — Hetzner)
@@ -70,6 +73,18 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
     # Docker containers (if docker socket is available)
     containers, docker_available = _get_docker_containers()
 
+    # Compute network I/O rate
+    now = time.monotonic()
+    sent_rate = 0.0
+    recv_rate = 0.0
+    if _network_rate is not None:
+        prev_sent, prev_recv, prev_time = _network_rate
+        elapsed = now - prev_time
+        if elapsed > 0:
+            sent_rate = max(0.0, (net.bytes_sent - prev_sent) / elapsed)
+            recv_rate = max(0.0, (net.bytes_recv - prev_recv) / elapsed)
+    _network_rate = (net.bytes_sent, net.bytes_recv, now)
+
     return {
         "cpu_percent": cpu,
         "memory": {
@@ -91,6 +106,8 @@ def _get_server_metrics_fresh() -> dict[str, Any]:
         "network": {
             "bytes_sent": net.bytes_sent,
             "bytes_recv": net.bytes_recv,
+            "sent_rate": int(sent_rate),
+            "recv_rate": int(recv_rate),
         },
         "uptime_seconds": int(time.time() - boot_time),
         "load_avg": {
