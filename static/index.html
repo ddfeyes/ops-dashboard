@@ -929,6 +929,14 @@
       flex-shrink: 0;
       opacity: 0.8;
     }
+    .container-restart {
+      font-size: 9px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .container-restart:hover { color: #e3b341; }
 
     .status-error {
       display: flex;
@@ -1792,9 +1800,12 @@
           const dotColor = status.includes("up") || status.includes("running") ? "#3fb950" : "#f85149";
           const startedAt = c.StartedAt || "";
           const uptime = startedAt ? relTime(startedAt) : "";
+          const rc = c.RestartCount || 0;
+          const restartBadge = rc > 0 ? `<span class="container-restart" title="Restart count">↺${rc}</span>` : "";
           return `<div class="container-cell">
             <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
             <span class="container-cell-name">${escHtml(name)}</span>
+            ${restartBadge}
             <span class="container-cell-uptime">${escHtml(uptime)}</span>
           </div>`;
         }).join("");

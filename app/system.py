@@ -159,6 +159,7 @@ def _get_docker_containers() -> tuple[list[dict[str, Any]], bool]:
                 "Status": c.status,
                 "State": c.status,
                 "StartedAt": started_at,
+                "RestartCount": c.attrs.get("RestartCount", 0),
             })
         client.close()
         return result, True
