@@ -51,6 +51,7 @@ def get_server_metrics() -> dict[str, Any]:
 
 def _get_server_metrics_fresh() -> dict[str, Any]:
     """Return fresh metrics for the local machine (the Hetzner server)."""
+    global _network_rate
     cpu = psutil.cpu_percent(interval=0.5)
     mem = psutil.virtual_memory()
     disk = psutil.disk_usage("/")
