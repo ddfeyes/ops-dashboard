@@ -109,7 +109,7 @@ for agent_dir in os.listdir(sessions_base):
         if last_ms:
             last_iso = datetime.fromtimestamp(last_ms/1000, tz=timezone.utc).isoformat()
             age_secs = now - last_ms/1000
-            result[agent_dir] = {"status": "active" if age_secs < 900 else "idle", "last_seen_iso": last_iso}
+            result[agent_dir] = {"status": "active" if age_secs < 900 else ("offline" if age_secs >= 10800 else "idle"), "last_seen_iso": last_iso}
     except Exception:
         pass
 print(json.dumps(result, separators=(',', ':')))
