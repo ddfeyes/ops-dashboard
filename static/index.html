@@ -374,6 +374,8 @@
       margin-bottom: 8px;
       word-break: break-word;
     }
+    /* Subtle hint that the card title is clickable */
+    a:hover .card-title { text-decoration: underline; text-decoration-color: var(--accent, #58a6ff); }
 
     .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
     .tag {
@@ -1282,7 +1284,7 @@
       const ts = card.timestamp ? `<span class="card-time">${relTime(card.timestamp)}</span>` : "";
 
       return `
-        <a class="card${staleClass}" href="${escHtml(card.url)}" target="_blank" rel="noopener">
+        <a class="card${staleClass}" href="${escHtml(card.pr_url || card.url)}" target="_blank" rel="noopener">
           <div class="card-id">${shortId(card.id)}</div>
           <div class="card-title">${escHtml(card.title)}</div>
           ${tags ? `<div class="card-tags">${tags}</div>` : ""}
