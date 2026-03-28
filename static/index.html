@@ -1993,9 +1993,11 @@
         jobs.sort((a, b) => (b.consecutive_errors || 0) - (a.consecutive_errors || 0));
         // Summary row
         const totalErrors = jobs.reduce((s, j) => s + (j.consecutive_errors || 0), 0);
-        const nextJob = jobs.find(j => j.next_run && new Date(j.next_run).getTime() > Date.now());
+        const nowMs = Date.now();
+        const overdueCount = jobs.filter(j => j.next_run && new Date(j.next_run).getTime() < nowMs - 300000).length; // >5 min late
+        const nextJob = jobs.find(j => j.next_run && new Date(j.next_run).getTime() > nowMs);
         const nextLabel = nextJob ? "next ▶ " + new Date(nextJob.next_run).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : "";
-        const summaryHtml = `<div class="cron-summary">${jobs.length} cron${jobs.length !== 1 ? 's' : ''}${totalErrors > 0 ? ' · <span style="color:var(--red)">' + totalErrors + ' error' + (totalErrors !== 1 ? 's' : '') + '</span>' : ''}${nextLabel ? ' · ' + nextLabel : ''}</div>`;
+        const summaryHtml = `<div class="cron-summary">${jobs.length} cron${jobs.length !== 1 ? 's' : ''}${overdueCount > 0 ? ' · <span style="color:var(--yellow)">⚠ ' + overdueCount + ' late</span>' : ''}${totalErrors > 0 ? ' · <span style="color:var(--red)">' + totalErrors + ' err</span>' : ''}${nextLabel ? ' · ' + nextLabel : ''}</div>`;
         if (rootEl) rootEl.innerHTML = summaryHtml + jobs.map(j => {
           const dotColor = j.consecutive_errors > 0 ? "#f85149" : j.last_status === "ok" ? "#3fb950" : "#e3b341";
           const interval = (() => {
