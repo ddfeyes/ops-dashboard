@@ -17,3 +17,4 @@
 - [x] P3: done column age footer showing oldest card age (issue #163) — fixed 2026-03-28
 - [x] P3: done cards >7d old get visual stale marker (opacity+strikethrough) (issue #164) — fixed 2026-03-28
 - [x] P3: container restart count badge — only shown when >0 (issue #165) — fixed 2026-03-28
+- [x] P3: kanban cards link to PR when available, title hover hint (issue #166) — fixed 2026-03-28
