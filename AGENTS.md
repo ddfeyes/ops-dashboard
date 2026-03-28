@@ -33,3 +33,12 @@ BLOCKED = любой state → sessions_send к Lain
 ## Rules
 Читай /home/hui20metrov/agents/lain/shared/RULES.md
 Один цикл = одна state transition. Без пропусков. Без shortcuts.
+
+## Agent Session Keys (для sessions_send)
+- Mika (design): agent:mika:telegram:group:-1003844426893:topic:4982
+- Masami (review): agent:masami:telegram:group:-1003844426893:topic:2475
+- NAVI (deploy): agent:navi:telegram:group:-1003844426893:topic:1657
+- Lain (orchestrator): agent:lain:telegram:group:-1003844426893:topic:829
+НЕ используй agents_list tool — он показывает только subagents, не всех агентов.
+Все агенты выше ЖИВЫЕ и просыпаются каждые 20 мин.
+
