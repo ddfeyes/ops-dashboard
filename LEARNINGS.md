@@ -5,6 +5,11 @@
 - docker exec gateway-nginx nginx -t before nginx -s reload
 - message tool unavailable in cron context — use exec curl Bot API
 
+## 2026-03-28 — Network rate shows — on first poll (Issue #162)
+- Backend returned 0 when _prev_net was None (no previous data after restart)
+- Fix: return null; frontend shows — instead of misleading 0B/s
+- API now: sent_rate=null, recv_rate=null on first poll; real values after second poll
+
 ## 2026-03-28 — /api/kanban returns {cards,total} (Issue #161)
 - Changed return type from `list[dict]` to `dict{cards,total}`
 - Badge now shows "5/148 issues" when filtered, "148 issues" when showing all

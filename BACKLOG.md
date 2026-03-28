@@ -13,3 +13,4 @@
 - [x] P3: kanban toolbar repo counts (issue #159) — fixed 2026-03-28
 - [x] P3: kanban Done column header shows X/Y count when collapsed (issue #160) — fixed 2026-03-28
 - [x] P3: /api/kanban returns {cards,total} with filtered count badge (issue #161) — fixed 2026-03-28
+- [x] P3: network rate shows — not 0B/s on first poll post-restart (issue #162) — fixed 2026-03-28
