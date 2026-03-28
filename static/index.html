@@ -480,6 +480,7 @@
     }
     .filter-btn.active { border-color: var(--accent); color: var(--accent); background: #0d2245; }
     .filter-btn:hover:not(.active) { border-color: var(--muted); color: var(--text); }
+    .repo-count { font-size: 10px; opacity: 0.65; margin-left: 3px; }
 
     /* ── Agent Monitor ── */
     .panel-header .panel-count {
@@ -1292,9 +1293,10 @@
       if (repos.length <= 1) { document.getElementById("toolbar").innerHTML = ""; return; }
 
       const buttons = ["all", ...repos].map(r => {
+        const count = r === "all" ? cards.length : cards.filter(c => c.id.startsWith(r + "#") || c.id.startsWith(r + "/")).length;
         const active = r === activeRepo ? "active" : "";
         const label = r === "all" ? "All repos" : r.split("/")[1] || r;
-        return `<button class="filter-btn ${active}" data-repo="${escHtml(r)}">${escHtml(label)}</button>`;
+        return `<button class="filter-btn ${active}" data-repo="${escHtml(r)}">${escHtml(label)} <span class="repo-count">${count}</span></button>`;
       }).join("");
       document.getElementById("toolbar").innerHTML =
         `<span class="toolbar-label">Repo:</span>${buttons}`;
