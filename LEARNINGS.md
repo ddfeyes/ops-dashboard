@@ -104,3 +104,10 @@
 - Added '⚠ N late' to cron summary row when crons are >5min behind
 - 5 of 6 crons currently late (11-27 min) — scheduler performance issue
 - Combined with LATE display fix, cron delays now visible at a glance
+
+## 2026-03-28 — Fix: staleClass undefined (kanban stale cards broken)
+- staleClass was referenced but never defined in cardHtml() — stale card styling never worked
+- Fix: compute staleClass from card.timestamp and column === 'done' + age > 7 days
+- CSS: .card-stale { opacity: 0.55; } + .card-stale .card-title { text-decoration: line-through; }
+- 54 stale cards detected, oldest 12.6d
+- AGENTS.md was updated to State Machine workflow mid-cycle (see new docs in /home/hui20metrov/agents/lain/shared/)
