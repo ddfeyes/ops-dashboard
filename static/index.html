@@ -1793,7 +1793,11 @@
         return;
       }
 
-      labelEl.textContent = `${containers.length} container${containers.length !== 1 ? "s" : ""}`;
+      const highRestart = containers.filter(c => (c.RestartCount || 0) > 5);
+      const restartWarning = highRestart.length > 0
+        ? ` <span style="color:#d29922;" title="Containers with >5 restarts: ${highRestart.map(c => c.Names || c.Name).join(", ")}">⚠${highRestart.length}</span>`
+        : "";
+      labelEl.innerHTML = `<span class="mono">${containers.length} container${containers.length !== 1 ? "s" : ""}</span>${restartWarning}`;
 
       // Group containers by project prefix (first segment before '-' or '_')
       function containerPrefix(name) {
