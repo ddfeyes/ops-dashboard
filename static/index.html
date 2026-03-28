@@ -940,6 +940,13 @@
     }
     .container-restart:hover { color: #e3b341; }
 
+    /* High-restart container row — visually prominent warning */
+    .container-cell-warn {
+      background: rgba(248, 81, 73, 0.08) !important;
+      border-left: 2px solid #f85149;
+      border-radius: 2px;
+    }
+
     .status-error {
       display: flex;
       align-items: flex-start;
@@ -1752,7 +1759,8 @@
         const restartBadge = rc > 0 ? `<span class="container-restart" title="Restart count">↺${rc}</span>` : "";
         const imageName = (c.Image || c.image || "").split("/").pop().split(":")[0];
         const imageTip = imageName ? ` title="image: ${escHtml(c.Image || "")}"` : "";
-        return `<div class="container-cell"${imageTip}>
+        const warnClass = rc > 5 ? " container-cell-warn" : "";
+        return `<div class="container-cell${warnClass}"${imageTip}>
           <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
           <span class="container-cell-name">${escHtml(name)}</span>
           ${restartBadge}
@@ -1874,7 +1882,8 @@
           const restartBadge = rc > 0 ? `<span class="container-restart" title="Restart count">↺${rc}</span>` : "";
           const imageName = (c.Image || c.image || "").split("/").pop().split(":")[0];
           const imageTip = imageName ? ` title="image: ${escHtml(c.Image || "")}"` : "";
-          return `<div class="container-cell"${imageTip}>
+          const warnClass = rc > 5 ? " container-cell-warn" : "";
+          return `<div class="container-cell${warnClass}"${imageTip}>
             <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
             <span class="container-cell-name">${escHtml(name)}</span>
             ${restartBadge}
