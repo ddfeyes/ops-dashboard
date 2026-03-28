@@ -51,6 +51,11 @@
 - `docker ps --format '{{.Names}} {{.Status}}'` — parse health from Status field
 - Frontend: no change (health endpoint was for backend/API use)
 
+## 2026-03-28 — Container image tooltip (Issue #170)
+- Added image name as hover tooltip on every container row
+- Tooltip shows full image tag (e.g., `image: triangle-scanner-scanner:latest`)
+- Helps ops identify which image a named container is running without guessing
+
 ## 2026-03-28 — Container restart warning badge (Issue #169)
 - Added ⚠N warning badge to containers panel label when any container has >5 restarts
 - Currently catches bananas31-frontend (↺53 restarts) — service is unstable
