@@ -85,6 +85,15 @@ async def health() -> dict:
             "status": "ok" if docker_ok else "error",
             "containers": container_count,
         }
+        # Surface any containers that are not in a healthy running state
+        unhealthy = [
+            {"name": c.get("Names", c.get("Name", "?")), "status": c.get("Status", c.get("State", ""))}
+            for c in sys_data.get("containers", [])
+            if not (c.get("State") or c.get("Status") or "").lower() in ("running", "up")
+        ]
+        if unhealthy:
+            checks["docker"]["unhealthy"] = unhealthy
+            overall = "degraded"
         checks["hetzner"] = {"status": "ok"}
         if not docker_ok:
             overall = "degraded"
