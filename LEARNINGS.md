@@ -5,6 +5,11 @@
 - docker exec gateway-nginx nginx -t before nginx -s reload
 - message tool unavailable in cron context — use exec curl Bot API
 
+## 2026-03-28 — Done column age footer (Issue #163)
+- Shows "oldest 13d" or "oldest 13d · 47 >7d" (count of cards >7 days old) below done column
+- Helps spot stale done items at a glance
+- Computed in JS from card timestamps — no backend change needed
+
 ## 2026-03-28 — Network rate shows — on first poll (Issue #162)
 - Backend returned 0 when _prev_net was None (no previous data after restart)
 - Fix: return null; frontend shows — instead of misleading 0B/s
