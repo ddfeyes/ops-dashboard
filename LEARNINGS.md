@@ -5,6 +5,11 @@
 - docker exec gateway-nginx nginx -t before nginx -s reload
 - message tool unavailable in cron context — use exec curl Bot API
 
+## 2026-03-28 — Kanban toolbar repo counts (Issue #159)
+- Toolbar filter buttons now show card counts next to each repo name
+- 'triangle (12)' 'ops-dashboard (5)' 'All repos (148)'
+- Small but useful for quickly knowing which repos have most cards
+
 ## 2026-03-28 — Health endpoint: unhealthy containers (Issue #158)
 - Health endpoint showed container count but not WHICH containers were unhealthy
 - Fixed: added `checks.docker.unhealthy` list — name+status for any container not in 'running'/'up' state
