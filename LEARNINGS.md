@@ -99,3 +99,8 @@
 - Container search state stored in `containerSearch` global var; lastServerData cached for re-filter
 
 ## 2026-03-28 — Network I/O rate (Issue #157)
+
+## 2026-03-28 — Cron overdue count in summary header
+- Added '⚠ N late' to cron summary row when crons are >5min behind
+- 5 of 6 crons currently late (11-27 min) — scheduler performance issue
+- Combined with LATE display fix, cron delays now visible at a glance
