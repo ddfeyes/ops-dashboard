@@ -1221,8 +1221,17 @@
           <span>Containers</span>
           <span class="panel-count mono" id="hetzner-label">—</span>
         </div>
-        <div class="panel-body" id="hetzner-root">
-          <div class="empty-panel">Loading…</div>
+        <div class="panel-body" id="hetzner-root" style="padding:8px 12px 0;">
+          <div style="margin-bottom:8px;">
+            <div style="position:relative;display:inline-flex;align-items:center;">
+              <input id="container-search" type="text" placeholder="🔍 filter containers…"
+                style="background:var(--surface-raised);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:10px;padding:3px 22px 3px 7px;width:130px;outline:none;font-family:var(--font-ui);"
+              />
+              <span id="cs-clear" style="display:none;position:absolute;right:5px;cursor:pointer;color:var(--muted);font-size:12px;user-select:none;pointer-events:none;">×</span>
+            </div>
+            <span id="container-search-count" style="font-size:10px;color:var(--muted);margin-left:8px;"></span>
+          </div>
+          <div id="container-list-root"><div class="empty-panel">Loading…</div></div>
         </div>
       </section>
     </main>
@@ -1703,9 +1712,52 @@
         _grid;
     }
 
+    // Filter+render containers into #container-list-root (called when search is active)
+    function renderFilteredContainers(server) {
+      const rootEl = document.getElementById("container-list-root");
+      if (!rootEl) return;
+      const containers = Array.isArray(server.containers) ? server.containers : [];
+      if (containers.length === 0) {
+        rootEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:4px 0;">No containers</div>`;
+        return;
+      }
+      const q = containerSearch.toLowerCase();
+      const filtered = containers.filter(c => {
+        const name = (c.Names || c.Name || c.ID || "").toLowerCase();
+        return name.includes(q);
+      });
+      const countEl = document.getElementById("container-search-count");
+      if (countEl) countEl.textContent = filtered.length !== containers.length ? `showing ${filtered.length} of ${containers.length}` : "";
+      if (filtered.length === 0) {
+        rootEl.innerHTML = `<div style="font-size:11px;color:var(--muted);padding:4px 0;">No containers match "${escHtml(unescapeHtml(containerSearch))}"</div>`;
+        return;
+      }
+      // Render filtered list (ungrouped for simplicity when searching)
+      const rows = filtered.map(c => {
+        const name = c.Names || c.Name || c.ID || "?";
+        const status = (c.Status || c.State || "").toLowerCase();
+        const dotColor = status.includes("up") || status.includes("running") ? "#3fb950" : "#f85149";
+        const startedAt = c.StartedAt || "";
+        const uptime = startedAt ? relTime(startedAt) : "";
+        const rc = c.RestartCount || 0;
+        const restartBadge = rc > 0 ? `<span class="container-restart" title="Restart count">↺${rc}</span>` : "";
+        return `<div class="container-cell">
+          <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
+          <span class="container-cell-name">${escHtml(name)}</span>
+          ${restartBadge}
+          <span class="container-cell-uptime">${escHtml(uptime)}</span>
+        </div>`;
+      }).join("");
+      rootEl.innerHTML = `<div class="containers-grid">${rows}</div>`;
+    }
+
     function renderContainersPanel(server) {
+      // Store for filter re-use
+      lastServerData = server;
       const labelEl = document.getElementById("hetzner-label");
       const rootEl = document.getElementById("hetzner-root");
+      const listRootEl = document.getElementById("container-list-root");
+      if (!rootEl || !listRootEl) return;
 
       if (!server) {
         rootEl.innerHTML = `
@@ -1795,7 +1847,7 @@
             <div class="container-group-rows">${rows}</div>
           </div>`;
         });
-        rootEl.innerHTML = `<div class="containers-label">Running containers</div><div class="containers-grouped">${html}</div>`;
+        listRootEl.innerHTML = `<div class="containers-label">Running containers</div><div class="containers-grouped">${html}</div>`;
       } else {
         const rows = containers.map(c => {
           const name = c.Names || c.Name || c.ID || "?";
@@ -1812,7 +1864,7 @@
             <span class="container-cell-uptime">${escHtml(uptime)}</span>
           </div>`;
         }).join("");
-        rootEl.innerHTML = `<div class="containers-label">Running containers</div><div class="containers-grid">${rows}</div>`;
+        listRootEl.innerHTML = `<div class="containers-label">Running containers</div><div class="containers-grid">${rows}</div>`;
       }
     }
 
@@ -2137,6 +2189,36 @@
         if (badge) badge.textContent = "v" + version + deployedStr;
       } catch(_) {}
     }
+
+    // Container search — wire up after DOM is ready
+    function setupContainerSearch() {
+      const input = document.getElementById("container-search");
+      const clearBtn = document.getElementById("cs-clear");
+      if (!input || !clearBtn) { setTimeout(setupContainerSearch, 200); return; }
+      input.addEventListener("input", function() {
+        containerSearch = this.value.trim().toLowerCase();
+        clearBtn.style.display = containerSearch ? "inline" : "none";
+        clearBtn.style.pointerEvents = containerSearch ? "auto" : "none";
+        if (containerSearch) {
+          if (lastServerData) {
+            renderFilteredContainers(lastServerData);
+          }
+        } else {
+          if (lastServerData) {
+            renderContainersPanel(lastServerData);
+          }
+        }
+      });
+      clearBtn.style.cursor = "pointer";
+      clearBtn.addEventListener("click", function() {
+        input.value = "";
+        containerSearch = "";
+        this.style.display = "none";
+        this.style.pointerEvents = "none";
+        if (lastServerData) renderContainersPanel(lastServerData);
+      });
+    }
+    setTimeout(setupContainerSearch, 300);
 
     // Initial load
     document.getElementById("board-root").innerHTML =
