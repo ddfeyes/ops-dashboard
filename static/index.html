@@ -804,6 +804,7 @@
     .cron-dur-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; }
     .cron-dur-bar { height: 100%; border-radius: 2px; transition: width 0.3s ease; }
     .cron-err-badge { background: rgba(248,81,73,0.18); color: #f85149; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; margin-left: 6px; }
+    .cron-late { color: #f85149; font-weight: 600; }
 
     /* ── System Metrics ── */
     .metric-row { margin-bottom: 12px; }
@@ -2023,8 +2024,17 @@
           })();
           const lastRun = j.last_run ? relTime(j.last_run) : "never";
           const dur = j.last_duration_ms ? Math.round(j.last_duration_ms / 1000) + "s" : "";
-          const nextRunMs = j.next_run ? new Date(j.next_run).getTime() - Date.now() : 0;
-          const nextStr = nextRunMs > 5000 ? "▶ in " + Math.round(nextRunMs / 60000) + "m" : "▶ now";
+          const nextRunMs = j.next_run ? new Date(j.next_run).getTime() - Date.now() : null;
+          let nextStr;
+          if (nextRunMs === null) {
+            nextStr = "";  // next_run not available
+          } else if (nextRunMs > 5000) {
+            nextStr = "▶ in " + Math.round(nextRunMs / 60000) + "m";
+          } else if (nextRunMs < -5000) {
+            nextStr = "<span class='cron-late'>☓ " + Math.round(Math.abs(nextRunMs) / 60000) + "m LATE</span>";
+          } else {
+            nextStr = "▶ now";
+          }
           const errBadge = j.consecutive_errors > 0 ? `<span class="cron-err-badge">${j.consecutive_errors} err</span>` : "";
           const errSeg = j.consecutive_errors > 0 ? ` · × ${j.consecutive_errors} errors` : "";
           const rowStyle = j.consecutive_errors > 0 ? ` style="background:rgba(248,81,73,0.06)"` : "";
