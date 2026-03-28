@@ -5,6 +5,11 @@
 - docker exec gateway-nginx nginx -t before nginx -s reload
 - message tool unavailable in cron context — use exec curl Bot API
 
+## 2026-03-28 — Header shows version + deploy date (Issue #167)
+- Backend: added `_get_deployed_at()` using Docker SDK image.attrs['Created']
+- Frontend: calls `/api/health` on load, shows "v0.1.0 · deployed 28 Mar" in header
+- `deployed_at` = image build time, updates on each new deploy
+
 ## 2026-03-28 — Kanban cards link to PR when available (Issue #166)
 - Cards with `pr_url` now link to the PR (not the issue) — merged PRs open directly
 - Card title gets subtle underline on hover to hint the card is clickable
