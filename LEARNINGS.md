@@ -51,6 +51,11 @@
 - `docker ps --format '{{.Names}} {{.Status}}'` — parse health from Status field
 - Frontend: no change (health endpoint was for backend/API use)
 
+## 2026-03-28 — High-restart container row highlight (Issue #172)
+- Containers with >5 restarts now get a red left border + tinted red background
+- Makes the bananas31-frontend (↺53) row immediately visible in the container list
+- Threshold kept at >5 (same as restart warning badge threshold)
+
 ## 2026-03-28 — Kanban keyboard shortcuts (Issue #171)
 - Press "/" anywhere on the page to focus the kanban search bar
 - Press "Escape" while in the search bar to clear the search and unfocus

@@ -23,3 +23,4 @@
 - [x] P3: container restart warning badge when >5 restarts (issue #169) — fixed 2026-03-28
 - [x] P3: container image tooltip on hover (issue #170) — fixed 2026-03-28
 - [x] P3: kanban keyboard shortcuts: / to focus, Esc to clear (issue #171) — fixed 2026-03-28
+- [x] P3: high-restart container rows get red left border + tinted background (issue #172) — fixed 2026-03-28
