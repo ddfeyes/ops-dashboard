@@ -1147,9 +1147,10 @@
             </div>
             <div class="scroll-hint" id="scroll-hint">scroll → more columns</div>
             <div style="position:relative;display:flex;align-items:center;">
-              <input id="kanban-search" type="text" placeholder="🔍 filter…"
+              <input id="kanban-search" type="text" placeholder="🔍 / to focus…"
                 style="background:var(--surface-raised);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:3px 22px 3px 7px;width:110px;outline:none;font-family:var(--font-ui);"
                 oninput="searchQuery=this.value;document.getElementById('ks-clear').style.display=this.value?'':'none';renderBoard(allCards);"
+                onkeydown="if(event.key==='Escape'){searchQuery='';this.value='';document.getElementById('ks-clear').style.display='none';renderBoard(allCards);}"
               />
               <span id="ks-clear" onclick="searchQuery='';document.getElementById('kanban-search').value='';this.style.display='none';renderBoard(allCards);"
                 style="display:none;position:absolute;right:5px;cursor:pointer;color:var(--muted);font-size:12px;user-select:none;">×</span>
@@ -1256,6 +1257,14 @@
     let countdown = 30;
     let doneExpanded = false;
     const DONE_PREVIEW = 10;
+
+    // "/" focuses the kanban search; "Escape" clears it (handled on the input itself)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+        e.preventDefault();
+        document.getElementById('kanban-search').focus();
+      }
+    });
 
     function relTime(iso) {
       if (!iso) return "";
