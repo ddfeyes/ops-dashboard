@@ -56,6 +56,11 @@
 - Shows total count, error count (red when >0), and next fire time
 - Monospace font, subtle separator line from the rest of the list
 
+## 2026-03-28 — Kanban toolbar shows card count with total when filtered (Issue #176)
+- When viewing all repos: toolbar shows "148 cards" after the sort dropdown
+- When a repo filter is active: toolbar shows "12 · 148 total" (filtered count + total)
+- Helps users understand scope when viewing a filtered subset of the board
+
 ## 2026-03-28 — Kanban sort dropdown focus ring (Issue #175)
 - Sort dropdown (#sort-select) had outline:none inline — no keyboard focus indicator
 - Removed outline:none from inline style; added #sort-select:focus CSS with 2px accent outline
