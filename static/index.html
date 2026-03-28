@@ -1274,7 +1274,7 @@
       const ts = card.timestamp ? `<span class="card-time">${relTime(card.timestamp)}</span>` : "";
 
       return `
-        <a class="card" href="${escHtml(card.url)}" target="_blank" rel="noopener">
+        <a class="card${staleClass}" href="${escHtml(card.url)}" target="_blank" rel="noopener">
           <div class="card-id">${shortId(card.id)}</div>
           <div class="card-title">${escHtml(card.title)}</div>
           ${tags ? `<div class="card-tags">${tags}</div>` : ""}
