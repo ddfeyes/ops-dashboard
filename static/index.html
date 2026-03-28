@@ -1130,6 +1130,7 @@
       <div class="header-right">
         <span id="refresh-pulse"></span>
         <span id="live-clock" class="mono" style="font-size:11px;color:var(--muted);letter-spacing:0.05em;"></span>
+        <span id="version-badge" class="mono" style="font-size:10px;color:var(--muted);opacity:0.7;margin-right:8px;"></span>
         <button id="refresh-btn" onclick="loadAll()">↻ Refresh</button>
         <div id="status" class="mono">Loading…</div>
       </div>
@@ -2119,10 +2120,28 @@
     function updateClock() { const n = new Date(); document.getElementById("live-clock").textContent = n.toTimeString().slice(0,8); }
     setInterval(updateClock, 1000); updateClock();
 
+    // Load version info from health endpoint
+    async function loadVersion() {
+      try {
+        const r = await fetch("/api/health");
+        if (!r.ok) return;
+        const h = await r.json();
+        const version = h.version || "";
+        const deployed = h.deployed_at ? new Date(h.deployed_at) : null;
+        const deployedStr = deployed
+          ? " · deployed " + (deployed.toDateString() === new Date().toDateString()
+              ? deployed.toTimeString().slice(0,5)
+              : deployed.toLocaleDateString("en-GB", {day:"numeric",month:"short"}))
+          : "";
+        const badge = document.getElementById("version-badge");
+        if (badge) badge.textContent = "v" + version + deployedStr;
+      } catch(_) {}
+    }
+
     // Initial load
     document.getElementById("board-root").innerHTML =
       `<div class="loading-overlay"><div class="spinner"></div><span>Loading kanban…</span></div>`;
-    loadAll();
+    loadVersion().then(loadAll);
 
     // Refresh all panels every 30s
     agentsRefreshTimer = setInterval(loadAgents, 30000);

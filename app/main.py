@@ -102,10 +102,17 @@ async def health() -> dict:
         checks["hetzner"] = {"status": "error", "error": str(e)}
         overall = "degraded"
 
+    try:
+        loop = asyncio.get_running_loop()
+        deployed_at = await loop.run_in_executor(_executor, _get_deployed_at)
+    except Exception:
+        deployed_at = None
+
     return {
         "status": overall,
         "version": app.version,
         "uptime_seconds": uptime,
+        "deployed_at": deployed_at,
         "timestamp": now,
         "checks": checks,
     }
@@ -199,3 +206,20 @@ async def crons() -> list[dict[str, Any]]:
     """Return OpenClaw cron job status."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(_executor, get_crons)
+
+
+def _get_deployed_at() -> str | None:
+    """Return ISO timestamp of when the ops-dashboard image was built, or None."""
+    try:
+        import docker as docker_sdk
+        client = docker_sdk.DockerClient(base_url="unix:///var/run/docker.sock", timeout=5)
+        try:
+            img = client.images.get("ops-dashboard:latest")
+            created = img.attrs.get("Created", "")
+            client.close()
+            return created
+        except Exception:
+            client.close()
+            return None
+    except Exception:
+        return None
