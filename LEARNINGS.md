@@ -51,6 +51,11 @@
 - `docker ps --format '{{.Names}} {{.Status}}'` — parse health from Status field
 - Frontend: no change (health endpoint was for backend/API use)
 
+## 2026-03-28 — Kanban keyboard shortcuts (Issue #171)
+- Press "/" anywhere on the page to focus the kanban search bar
+- Press "Escape" while in the search bar to clear the search and unfocus
+- Self-contained: only fires when not already in an input/textarea
+
 ## 2026-03-28 — Container image tooltip (Issue #170)
 - Added image name as hover tooltip on every container row
 - Tooltip shows full image tag (e.g., `image: triangle-scanner-scanner:latest`)
