@@ -359,6 +359,8 @@
       color: inherit;
     }
     .card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .card-stale { opacity: 0.55; }
+    .card-stale .card-title { text-decoration: line-through; }
 
     .card-id {
       font-size: 11px;
@@ -1321,6 +1323,8 @@
         : "";
 
       const ts = card.timestamp ? `<span class="card-time">${relTime(card.timestamp)}</span>` : "";
+      const isStale = card.timestamp && card.column === 'done' && (Date.now() - new Date(card.timestamp)) > 7 * 24 * 60 * 60 * 1000;
+      const staleClass = isStale ? " card-stale" : "";
 
       return `
         <a class="card${staleClass}" href="${escHtml(card.pr_url || card.url)}" target="_blank" rel="noopener">
