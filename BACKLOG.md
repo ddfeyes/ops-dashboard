@@ -20,3 +20,4 @@
 - [x] P3: kanban cards link to PR when available, title hover hint (issue #166) — fixed 2026-03-28
 - [x] P3: header shows version + deploy date (issue #167) — fixed 2026-03-28
 - [x] P3: container search/filter bar (issue #168) — fixed 2026-03-28
+- [x] P3: container restart warning badge when >5 restarts (issue #169) — fixed 2026-03-28

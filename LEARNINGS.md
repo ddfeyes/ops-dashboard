@@ -51,6 +51,11 @@
 - `docker ps --format '{{.Names}} {{.Status}}'` — parse health from Status field
 - Frontend: no change (health endpoint was for backend/API use)
 
+## 2026-03-28 — Container restart warning badge (Issue #169)
+- Added ⚠N warning badge to containers panel label when any container has >5 restarts
+- Currently catches bananas31-frontend (↺53 restarts) — service is unstable
+- Tooltip shows container names with high restart counts
+
 ## 2026-03-28 — Container search/filter bar (Issue #168)
 - Added search input to containers panel body (🔍 filter containers… placeholder)
 - Filters container list by name in real-time as user types
