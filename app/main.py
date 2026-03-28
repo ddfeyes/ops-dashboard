@@ -112,13 +112,13 @@ async def health() -> dict:
 
 
 @app.get("/api/kanban")
-async def kanban() -> list[dict]:
+async def kanban() -> dict[str, Any]:
     loop = asyncio.get_running_loop()
     try:
         cards = await loop.run_in_executor(_executor, fetch_kanban_cards)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-    return cards
+    return {"cards": cards, "total": len(cards)}
 
 
 @app.get("/api/agents")

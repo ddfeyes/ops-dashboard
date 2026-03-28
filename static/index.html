@@ -1220,6 +1220,7 @@
     const TAG_CLASS = { feat: "feat", fix: "fix", infra: "infra", chore: "chore", docs: "docs" };
 
     let allCards = [];
+    let kanbanTotal = 0;
     let activeRepo = "all";
     let searchQuery = "";
     let refreshTimer = null;
@@ -1356,7 +1357,10 @@
       // Update kanban total count badge
       const totalCount = filtered.length;
       const ktcEl = document.getElementById("kanban-total-count");
-      if(ktcEl){ktcEl.textContent=totalCount+" issues";ktcEl.style.display="";}
+      if(ktcEl){
+        ktcEl.textContent = totalCount < kanbanTotal ? `${totalCount}/${kanbanTotal} issues` : `${totalCount} issues`;
+        ktcEl.style.display="";
+      }
 
       // Show done badge (visible without scrolling) — click to scroll to Done column
       const doneCount = byCol["done"].length;
@@ -1397,7 +1401,8 @@
         const res = await fetch("/api/kanban");
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         const raw = await res.json();
-        allCards = Array.isArray(raw) ? raw : [];
+        allCards = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.cards) ? raw.cards : []);
+        kanbanTotal = (raw && typeof raw === "object" && !Array.isArray(raw)) ? (raw.total || allCards.length) : allCards.length;
         renderBoard(allCards);
         const now = new Date().toLocaleTimeString();
         countdown = 30;
