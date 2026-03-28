@@ -1741,7 +1741,9 @@
         const uptime = startedAt ? relTime(startedAt) : "";
         const rc = c.RestartCount || 0;
         const restartBadge = rc > 0 ? `<span class="container-restart" title="Restart count">↺${rc}</span>` : "";
-        return `<div class="container-cell">
+        const imageName = (c.Image || c.image || "").split("/").pop().split(":")[0];
+        const imageTip = imageName ? ` title="image: ${escHtml(c.Image || "")}"` : "";
+        return `<div class="container-cell"${imageTip}>
           <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
           <span class="container-cell-name">${escHtml(name)}</span>
           ${restartBadge}
@@ -1861,7 +1863,9 @@
           const uptime = startedAt ? relTime(startedAt) : "";
           const rc = c.RestartCount || 0;
           const restartBadge = rc > 0 ? `<span class="container-restart" title="Restart count">↺${rc}</span>` : "";
-          return `<div class="container-cell">
+          const imageName = (c.Image || c.image || "").split("/").pop().split(":")[0];
+          const imageTip = imageName ? ` title="image: ${escHtml(c.Image || "")}"` : "";
+          return `<div class="container-cell"${imageTip}>
             <span class="container-dot" style="background:${dotColor};flex-shrink:0"></span>
             <span class="container-cell-name">${escHtml(name)}</span>
             ${restartBadge}
