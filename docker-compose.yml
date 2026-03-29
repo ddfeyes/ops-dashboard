@@ -23,4 +23,4 @@ services:
       - ./static:/app/static:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - ~/.claude:/root/.claude:ro
-      - /home/hui20metrov/.openclaw/lcm.db:/data/lcm.db:ro
+      - ~/.openclaw/lcm.db:/data/lcm.db:ro
