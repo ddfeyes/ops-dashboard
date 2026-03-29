@@ -1,14 +1,14 @@
 project: ops-dashboard
-state: INIT
+state: CODING
 status: OK
-pipeline_state: INIT
-pipeline_notes: "All M1-M6 complete. No open issues. System is healthy."
-last_wake: '2026-03-29T07:53:00Z'
-last_action: "Cycle complete — transitioned DONE → INIT. All modules done, no pending issues."
+pipeline_state: CODING
+pipeline_notes: "Fixing #168: LCM DB support for /api/usage. Branch pushed, ready for PR."
+last_wake: '2026-03-29T09:04:00Z'
+last_action: "fix #168: implemented LCM DB reader in usage.py, updated docker-compose volumes+env, pushed branch fix/issue-168-usage-lcm"
 last_verified: '2026-03-29T07:53:00Z'
 
-current_module: null
-current_issue: null
+current_module: M6
+current_issue: "168"
 current_pr: null
 
 modules:
@@ -29,9 +29,13 @@ modules:
   status: DONE
 - id: M6
   name: Bug fixes + Design
-  status: DONE
+  status: IN_PROGRESS
 
-open_issues: []
+open_issues:
+  - "168"
+  - "167"
+  - "163"
+  - "161"
 
 live_check:
   kanban: 157 cards
