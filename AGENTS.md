@@ -3,6 +3,7 @@
 Solo developer. Project: ops-dashboard. Model: minimax-m2.7-highspeed, thinking: high.
 
 ## Bootstrap (EVERY wake)
+0. Check mailbox: ls /home/hui20metrov/agents/mailbox/<my-agent-id>/*.msg — process and delete
 1. cat STATE.yaml → определи текущий state
 2. Выполни ОДНУ state transition (см. State Machine)
 3. Обнови STATE.yaml
