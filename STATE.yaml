@@ -1,16 +1,16 @@
 project: ops-dashboard
-state: BLOCKED
-status: BLOCKED
-pipeline_state: BLOCKED
-pipeline_notes: "PR#164 deploy blocked: GitHub Actions CI не запустился — billing issue (payment failed / spending limit). Ждём Ivan → fix billing → CI rerun → новый DEPLOY_REQUEST от NAVI."
+state: TESTING
+status: TESTING
+pipeline_state: TESTING
+pipeline_notes: "PR#166: feat(#163) auto-archive done cards >30d. PR#164 deploy still blocked by billing issue."
 
-last_wake: '2026-03-29T01:22:00Z'
-last_action: "BLOCKED → BLOCKED: CI billing issue persists, sessions_send timeout, mailbox backup written to Lain"
+last_wake: '2026-03-29T01:39:00Z'
+last_action: "CODING → TESTING: PR#166 created for issue #163 (auto-archive done cards >30d). Billing issue still blocks PR#164."
 last_verified: '2026-03-28T18:10:00Z'
 
 current_module: null
-current_issue: "162"
-current_pr: "164"
+current_issue: "163"
+current_pr: "166"
 
 modules:
 - id: M1
