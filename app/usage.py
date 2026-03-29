@@ -1,9 +1,10 @@
-"""Anthropic API usage tracking via local Claude Code session logs."""
+"""Anthropic API usage tracking via local Claude Code session logs and OpenClaw LCM database."""
 
 from __future__ import annotations
 
 import json
 import os
+import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -137,8 +138,74 @@ def _sonnet_tokens(by_model: dict[str, dict[str, int]]) -> int:
     return total
 
 
+def _get_usage_from_lcm_db(lcm_db_path: str | None = None) -> dict[str, Any] | None:
+    """Read token usage from the OpenClaw LCM database.
+
+    Uses messages.token_count as the primary source since step_tokens
+    are not reliably populated. Approximates input/output split as 40/60.
+    """
+    db_path = lcm_db_path or os.getenv("LCM_DB_PATH")
+    if not db_path:
+        return None
+
+    try:
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+
+        week_start = _week_start_utc()
+        # Use space-separated format to match SQLite TEXT storage
+        week_start_str = week_start.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Current session: most recent assistant message with token_count
+        cur.execute(
+            """SELECT token_count, created_at
+               FROM messages
+               WHERE role = 'assistant'
+                 AND token_count IS NOT NULL
+                 AND token_count > 0
+               ORDER BY created_at DESC LIMIT 1"""
+        )
+        row = cur.fetchone()
+        current_input = 0
+        current_output = 0
+        if row:
+            tc = row[0] or 0
+            current_input = int(tc * 0.4)
+            current_output = int(tc * 0.6)
+
+        # Weekly totals from messages table
+        cur.execute(
+            """SELECT COALESCE(SUM(token_count), 0)
+               FROM messages
+               WHERE role = 'assistant'
+                 AND token_count IS NOT NULL
+                 AND created_at >= ?""",
+            (week_start_str,)
+        )
+        msg_row = cur.fetchone()
+        weekly_total = int(msg_row[0]) if msg_row and msg_row[0] else 0
+        weekly_input = int(weekly_total * 0.4)
+        weekly_output = int(weekly_total * 0.6)
+
+        conn.close()
+
+        total = weekly_input + weekly_output
+        if total == 0 and current_input + current_output == 0:
+            return None
+
+        return {
+            "input_tokens": weekly_input,
+            "output_tokens": weekly_output,
+            "current_input": current_input,
+            "current_output": current_output,
+            "total": total,
+        }
+    except Exception as e:
+        return None
+
+
 def get_usage() -> dict[str, Any]:
-    """Aggregate token usage from local Claude Code session logs.
+    """Aggregate token usage from local Claude Code session logs or OpenClaw LCM database.
 
     Returns:
         A dict with keys:
@@ -151,7 +218,61 @@ def get_usage() -> dict[str, Any]:
         - limits: the configured limits for context
         - source: where data came from
     """
+    lcm_db_path = os.getenv("LCM_DB_PATH")
+
+    # Use LCM database when configured; JSONL files may not be available in container
+    if lcm_db_path:
+        lcm_data = _get_usage_from_lcm_db(lcm_db_path)
+        if lcm_data is not None:
+            use_lcm = True
+        else:
+            use_lcm = False
+    else:
+        use_lcm = False
+
     all_files = _all_jsonl_files()
+
+    if use_lcm:
+        weekly_input = lcm_data["input_tokens"]
+        weekly_output = lcm_data["output_tokens"]
+        current_input = lcm_data.get("current_input", 0)
+        current_output = lcm_data.get("current_output", 0)
+
+        session_total = current_input + current_output
+        weekly_all_total = weekly_input + weekly_output
+        # LCM DB doesn't have per-model breakdown; treat all as Sonnet
+        weekly_sonnet_total = weekly_all_total
+
+        return {
+            "current_session": {
+                "input_tokens": current_input,
+                "output_tokens": current_output,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+                "total_tokens": session_total,
+                "by_model": {},
+                "source_file": None,
+            },
+            "current_session_pct": _pct(session_total, SESSION_TOKEN_LIMIT),
+            "weekly_all": {
+                "input_tokens": weekly_input,
+                "output_tokens": weekly_output,
+                "total_tokens": weekly_all_total,
+                "sonnet_tokens": weekly_sonnet_total,
+                "by_model": {},
+            },
+            "weekly_all_pct": _pct(weekly_all_total, WEEKLY_ALL_TOKEN_LIMIT),
+            "weekly_sonnet_pct": _pct(weekly_sonnet_total, WEEKLY_SONNET_TOKEN_LIMIT),
+            "reset_times": {
+                "weekly": _next_week_start_utc().isoformat(),
+            },
+            "limits": {
+                "session_token_limit": SESSION_TOKEN_LIMIT,
+                "weekly_all_token_limit": WEEKLY_ALL_TOKEN_LIMIT,
+                "weekly_sonnet_token_limit": WEEKLY_SONNET_TOKEN_LIMIT,
+            },
+            "source": "openclaw_lcm_db",
+        }
 
     # Current session: most recently written JSONL file
     current_usage: dict[str, Any] = {

@@ -15,10 +15,14 @@ def test_health():
 
 
 def test_kanban_returns_list():
-    """Kanban endpoint must return a JSON list (may be empty when GH_TOKEN is absent)."""
+    """Kanban endpoint must return a dict with cards list and total (may be empty when GH_TOKEN is absent)."""
     r = client.get("/api/kanban")
     assert r.status_code == 200
-    assert isinstance(r.json(), list)
+    data = r.json()
+    assert isinstance(data, dict)
+    assert "cards" in data
+    assert "total" in data
+    assert isinstance(data["cards"], list)
 
 
 def test_agents_returns_expected_keys():
@@ -31,11 +35,11 @@ def test_agents_returns_expected_keys():
 
 
 def test_system_returns_expected_keys():
-    """System endpoint must return mac and hetzner keys."""
+    """System endpoint must return mac_remote and hetzner keys."""
     r = client.get("/api/system")
     assert r.status_code == 200
     data = r.json()
-    assert "mac" in data
+    assert "mac_remote" in data
     assert "hetzner" in data
 
 

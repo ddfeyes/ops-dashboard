@@ -17,6 +17,10 @@ services:
       - SERVER_LABEL=Hetzner
       - WEEKLY_ALL_TOKEN_LIMIT=10000000
       - WEEKLY_SONNET_TOKEN_LIMIT=7500000
+      - CLAUDE_HOME=/root/.claude
+      - LCM_DB_PATH=/data/lcm.db
     volumes:
       - ./static:/app/static:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.claude:/root/.claude:ro
+      - ~/.openclaw/lcm.db:/data/lcm.db:ro

@@ -1,0 +1,19 @@
+{
+  "deploy_result": "success",
+  "environment": "prod",
+  "smoke_passed": true,
+  "smoke_checks": [
+    {"check": "root_health", "status": "pass", "http_status": 200},
+    {"check": "api_kanban", "status": "pass", "response": "cards returned"},
+    {"check": "api_system", "status": "pass", "response": "metrics returned"}
+  ],
+  "health_window_result": "skipped",
+  "skip_reason": "single-server hetzner, no staging - abbreviated deploy per release-modes.md single-server notes",
+  "rollback_verified": false,
+  "deployed_at": "2026-03-29T02:49:24Z",
+  "artifact": "PR#166 feat(#163) auto-archive done cards >30d",
+  "git_ref": "main",
+  "docker_image": "ops-dashboard:latest",
+  "server": "hetzner (94.130.65.86:2203)",
+  "note": "CI was green before deploy. Container recreated successfully."
+}

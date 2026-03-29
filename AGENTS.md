@@ -3,6 +3,7 @@
 Solo developer. Project: ops-dashboard. Model: minimax-m2.7-highspeed, thinking: high.
 
 ## Bootstrap (EVERY wake)
+0. Check mailbox: ls /home/hui20metrov/agents/mailbox/<my-agent-id>/*.msg — process and delete
 1. cat STATE.yaml → определи текущий state
 2. Выполни ОДНУ state transition (см. State Machine)
 3. Обнови STATE.yaml
@@ -13,7 +14,9 @@ Solo developer. Project: ops-dashboard. Model: minimax-m2.7-highspeed, thinking:
 - Live: https://ops-dashboard.111miniapp.com/
 - Topic: 6982
 - Workspace: /home/hui20metrov/ops-dashboard/
+- Hetzner: source ~/.lain-secrets/hetzner.env → sshpass -p $HETZNER_PASS ssh -o StrictHostKeyChecking=no $HETZNER_USER@$HETZNER_HOST -p $HETZNER_PORT
 - Hetzner path: /home/user3/ops-dashboard
+- NEVER use 82.165.193.123 — WRONG IP. Always use hetzner.env vars.
 
 ## State Machine
 INIT → PLANNING → CODING → TESTING → SELF_REVIEW → DEPLOYING → VERIFYING → DONE → INIT
