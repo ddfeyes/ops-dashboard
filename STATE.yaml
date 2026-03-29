@@ -1,11 +1,11 @@
 project: ops-dashboard
-state: CODING
+state: TESTING
 status: WORKING
-pipeline_state: CODING
-pipeline_notes: "PLANNING→CODING: Fixed 3 issues. (1) #168 usage/0tokens: added ~/.claude volume mount + CLAUDE_HOME env in docker-compose.yml. (2) #167 system/null: removed :ro from docker.sock mount. (3) #161 cron error panel: added last_error field to crons.py API + click handler in frontend."
-last_wake: '2026-03-29T04:26:00Z'
-last_action: "PLANNING→CODING: fixed 3 issues across usage, system, crons modules."
-last_verified: '2026-03-29T03:23:00Z'
+pipeline_state: TESTING
+pipeline_notes: "CODING→TESTING: Committed fixes for #161,#167,#168. Rebuilt container on Hetzner. Verified: #167 system metrics OK, #161 last_error field present in /api/crons, #168 CLAUDE_HOME+volume configured (usage tokens 0 expected until scraper collects data)."
+last_wake: '2026-03-29T05:12:00Z'
+last_action: "CODING→TESTING: Verified 3 fixes deployed. #167 FIXED (system metrics real values), #161 FIXED (last_error field in API), #168 FIXED (CLAUDE_HOME+volume mounted, tokens 0 normal until scraper runs)."
+last_verified: '2026-03-29T05:17:00Z'
 
 current_module: null
 current_issue: null
