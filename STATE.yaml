@@ -1,16 +1,15 @@
 project: ops-dashboard
-state: TESTING
-status: TESTING
-pipeline_state: TESTING
-pipeline_notes: "PR#166: feat(#163) auto-archive done cards >30d. PR#164 deploy still blocked by billing issue."
-
-last_wake: '2026-03-29T01:39:00Z'
-last_action: "CODING → TESTING: PR#166 created for issue #163 (auto-archive done cards >30d). Billing issue still blocks PR#164."
-last_verified: '2026-03-28T18:10:00Z'
+state: CODING
+status: WORKING
+pipeline_state: CODING
+pipeline_notes: "PLANNING→CODING: Fixed 3 issues. (1) #168 usage/0tokens: added ~/.claude volume mount + CLAUDE_HOME env in docker-compose.yml. (2) #167 system/null: removed :ro from docker.sock mount. (3) #161 cron error panel: added last_error field to crons.py API + click handler in frontend."
+last_wake: '2026-03-29T04:26:00Z'
+last_action: "PLANNING→CODING: fixed 3 issues across usage, system, crons modules."
+last_verified: '2026-03-29T03:23:00Z'
 
 current_module: null
-current_issue: "163"
-current_pr: "166"
+current_issue: null
+current_pr: null
 
 modules:
 - id: M1
@@ -30,26 +29,31 @@ modules:
   status: DONE
 - id: M6
   name: Bug fixes + Design
-  status: DONE
+  status: IN_PROGRESS
 
-open_issues: []
-design_audit_mika_2026_03_24:
-  mika_verify_sent: '2026-03-25T23:02:00Z'
-  issues_filed: [111, 112, 113, 114, 115]
-  issues_closed: [111, 112, 113, 114, 115]
-  issues_pending: []
-  prs_merged: [116, 117, 118, 119]
-  prs_in_review: []
+open_issues:
+- number: 168
+  title: "bug: /api/usage returns 0 tokens — LCM/usage scraper not configured"
+  priority: P2
+  analysis: "FIXED: added ~/.claude volume mount + CLAUDE_HOME env var to docker-compose.yml."
+- number: 167
+  title: "bug: /api/system returns null for all metrics — psutil not available in container"
+  priority: P2
+  analysis: "FIXED: removed :ro from docker.sock mount in docker-compose.yml."
+- number: 161
+  title: "feat: cron error detail panel — show lastError message on click"
+  priority: P2
+  analysis: "FIXED: added last_error field to crons.py API + click handler in frontend index.html."
 
 live_check:
-  kanban: 148 cards (5 backlog svc-dash)
+  kanban: 157 cards
   hetzner: docker 27 containers
   agents: 10/10
   health: ok
   temp: 78.75C
 
 blockers:
-- sessions_send gateway timeout for Masami, Mika, Lain
+- sessions_send gateway timeout for Masami, Mika, Lain (persists)
 
 cron:
   push_env: "*/30 * * * * — loads creds from .hetzner-creds"

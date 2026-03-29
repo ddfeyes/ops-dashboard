@@ -53,6 +53,7 @@ def get_crons() -> list[dict[str, Any]]:
                     "next_run": next_run_iso,
                     "last_status": state.get("lastRunStatus", "unknown"),
                     "last_duration_ms": state.get("lastDurationMs", 0),
+                    "last_error": state.get("lastError") or None,
                     "consecutive_errors": state.get("consecutiveErrors", 0),
                     "schedule_expr": sched.get("expr", ""),
                 }
