@@ -1,0 +1,44 @@
+{
+  "task_id": "issue-168",
+  "pr_url": "https://github.com/ddfeyes/ops-dashboard/pull/169",
+  "head_sha": "2db5bee",
+  "reviewed_at": "2026-03-29T10:30:00Z",
+  "findings": [
+    {
+      "id": "F001",
+      "severity": "nit",
+      "category": "other",
+      "file": "app/usage.py",
+      "line_start": 196,
+      "line_end": 197,
+      "description": "Exception variable `e` in _get_usage_from_lcm_db is captured but never logged, making silent failures hard to debug.",
+      "evidence": "    except Exception as e:\n        return None",
+      "required_fix": "Add a log.warning or print(e) inside the except block for observability; or use bare `except Exception:` if silent suppression is intentional.",
+      "suppressed": false
+    },
+    {
+      "id": "F002",
+      "severity": "nit",
+      "category": "style",
+      "file": "app/usage.py",
+      "line_start": 218,
+      "line_end": 230,
+      "description": "The use_lcm boolean is an intermediate variable that adds indirection without clarity benefit; the lcm_data None-check suffices.",
+      "evidence": "    if lcm_db_path:\n        lcm_data = _get_usage_from_lcm_db(lcm_db_path)\n        if lcm_data is not None:\n            use_lcm = True\n        else:\n            use_lcm = False\n    else:\n        use_lcm = False",
+      "required_fix": "Simplify to: `lcm_data = _get_usage_from_lcm_db(lcm_db_path) if lcm_db_path else None` then branch on `if lcm_data is not None`.",
+      "suppressed": false
+    }
+  ],
+  "summary": {
+    "total_findings": 2,
+    "by_severity": {
+      "critical": 0,
+      "major": 0,
+      "minor": 0,
+      "nit": 2
+    },
+    "blocking_count": 0
+  },
+  "verdict": "approve",
+  "notes": "No critical or major findings. docker.sock writable change is intentional (part of prior fix #161/#167). Token 40/60 split approximation is clearly documented. CI green (all 3 runs passed). kanban auto-archive logic is safe (catches datetime parse exceptions). cron last_error addition is additive and safe."
+}

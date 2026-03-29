@@ -1,10 +1,10 @@
 project: ops-dashboard
-state: CODING
+state: SELF_REVIEW
 status: OK
-pipeline_state: CODING
-pipeline_notes: "Fixing #168: LCM DB support for /api/usage. Branch pushed, ready for PR."
-last_wake: '2026-03-29T09:04:00Z'
-last_action: "fix #168: implemented LCM DB reader in usage.py, updated docker-compose volumes+env, pushed branch fix/issue-168-usage-lcm"
+pipeline_state: SELF_REVIEW
+pipeline_notes: "Issue #168: PR #169 open, CI green (3/3 runs). Code-review-gate: 2 nits only, verdict=approve. Ready for DEPLOYING."
+last_wake: '2026-03-29T10:29:00Z'
+last_action: "TESTING→SELF_REVIEW: PR #169 verified, CI green, review-findings.json produced (verdict=approve, 0 blocking)"
 last_verified: '2026-03-29T07:53:00Z'
 
 current_module: M6
