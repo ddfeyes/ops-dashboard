@@ -2076,7 +2076,7 @@
           } else {
             nextStr = "▶ now";
           }
-          const errBadge = j.consecutive_errors > 0 ? `<span class="cron-err-badge">${j.consecutive_errors} err</span>` : "";
+          const errBadge = j.consecutive_errors > 0 ? `<span class="cron-err-badge" data-last-error="${escHtml(j.last_error || '')}" style="cursor:pointer" title="Click for error detail">${j.consecutive_errors} err</span>` : "";
           const errSeg = j.consecutive_errors > 0 ? ` · × ${j.consecutive_errors} errors` : "";
           const rowStyle = j.consecutive_errors > 0 ? ` style="background:rgba(248,81,73,0.06)"` : "";
                     // Duration bar
@@ -2353,6 +2353,18 @@
       });
     }
     setTimeout(setupContainerSearch, 300);
+
+    // Cron error detail on click
+    document.addEventListener("click", function(e) {
+      const badge = e.target.closest(".cron-err-badge");
+      if (!badge) return;
+      const msg = badge.getAttribute("data-last-error");
+      if (msg && msg !== "null" && msg !== "undefined" && msg !== "") {
+        alert("Cron error: " + msg);
+      } else {
+        alert("No error message available.");
+      }
+    });
 
     // Initial load
     loadVersion().then(loadAll);

@@ -1,5 +1,6 @@
 """Kanban board data: fetch GitHub issues/PRs and categorize into columns."""
 
+import datetime
 import json
 import os
 import re
@@ -200,6 +201,17 @@ def _fetch_kanban_cards_uncached() -> list[dict]:
                 linked_pr=linked_pr,
             )
             timestamp = issue.get("closedAt") or issue.get("createdAt")
+
+            # Auto-archive: skip done cards closed more than 30 days ago
+            if column == "done":
+                closed_at = issue.get("closedAt")
+                if closed_at:
+                    try:
+                        closed_dt = datetime.datetime.fromisoformat(closed_at.replace("Z", "+00:00"))
+                        if (datetime.datetime.now(datetime.timezone.utc) - closed_dt) > datetime.timedelta(days=30):
+                            continue  # auto-archived
+                    except Exception:
+                        pass
 
             cards.append(_build_card(
                 card_id=f"{repo}#{number}",
