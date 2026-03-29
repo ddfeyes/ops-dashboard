@@ -1,11 +1,11 @@
 project: ops-dashboard
-state: TESTING
-status: WORKING
-pipeline_state: TESTING
-pipeline_notes: "CODING→TESTING: Committed fixes for #161,#167,#168. Rebuilt container on Hetzner. Verified: #167 system metrics OK, #161 last_error field present in /api/crons, #168 CLAUDE_HOME+volume configured (usage tokens 0 expected until scraper collects data)."
-last_wake: '2026-03-29T05:12:00Z'
-last_action: "CODING→TESTING: Verified 3 fixes deployed. #167 FIXED (system metrics real values), #161 FIXED (last_error field in API), #168 FIXED (CLAUDE_HOME+volume mounted, tokens 0 normal until scraper runs)."
-last_verified: '2026-03-29T05:17:00Z'
+state: INIT
+status: OK
+pipeline_state: INIT
+pipeline_notes: "All M1-M6 complete. No open issues. System is healthy."
+last_wake: '2026-03-29T07:53:00Z'
+last_action: "Cycle complete — transitioned DONE → INIT. All modules done, no pending issues."
+last_verified: '2026-03-29T07:53:00Z'
 
 current_module: null
 current_issue: null
@@ -29,31 +29,18 @@ modules:
   status: DONE
 - id: M6
   name: Bug fixes + Design
-  status: IN_PROGRESS
+  status: DONE
 
-open_issues:
-- number: 168
-  title: "bug: /api/usage returns 0 tokens — LCM/usage scraper not configured"
-  priority: P2
-  analysis: "FIXED: added ~/.claude volume mount + CLAUDE_HOME env var to docker-compose.yml."
-- number: 167
-  title: "bug: /api/system returns null for all metrics — psutil not available in container"
-  priority: P2
-  analysis: "FIXED: removed :ro from docker.sock mount in docker-compose.yml."
-- number: 161
-  title: "feat: cron error detail panel — show lastError message on click"
-  priority: P2
-  analysis: "FIXED: added last_error field to crons.py API + click handler in frontend index.html."
+open_issues: []
 
 live_check:
   kanban: 157 cards
   hetzner: docker 27 containers
   agents: 10/10
   health: ok
-  temp: 78.75C
+  temp: 48.85C
 
-blockers:
-- sessions_send gateway timeout for Masami, Mika, Lain (persists)
+blockers: []
 
 cron:
   push_env: "*/30 * * * * — loads creds from .hetzner-creds"
